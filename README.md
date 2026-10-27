@@ -15,6 +15,7 @@ Edit [assets/projects.js](assets/projects.js) and append one object to `window.P
 ```
 
 `tags` is optional. Cards appear on the Lab page in list order. Commit and push; nothing else needs editing.
+For the full flow from a new repo to a card, see [artifacts/add-a-project.md](artifacts/add-a-project.md).
 
 ## Edit page text
 
