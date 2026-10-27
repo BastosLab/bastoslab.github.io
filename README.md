@@ -25,13 +25,7 @@ For the full flow from a new repo to a card, see [artifacts/add-a-project.md](ar
 
 ## Publish
 
-1. In the `bastoslab` GitHub org, create a public repo named exactly `bastoslab.github.io`.
-2. Push this folder to its `main` branch:
-   ```bash
-   git remote add origin https://github.com/bastoslab/bastoslab.github.io.git
-   git push -u origin main
-   ```
-3. In the repo, go to Settings → Pages and set the source to "Deploy from a branch", branch `main`, folder `/ (root)`.
-4. The site goes live at https://bastoslab.github.io/ after a minute or two.
+Push to `main`; GitHub Pages (Settings, Pages, branch `main`, folder `/ (root)`) rebuilds https://bastoslab.github.io/ in a minute or two.
+Remote: `git@github.com:BastosLab/bastoslab.github.io.git`. See `artifacts/skills/edit-bastoslab-site/SKILL.md` for the SSH key command.
 
 Project sites hosted under other accounts (for example `hnxj.github.io/jaxfne`) are only linked from the Lab page; they are not affected by this repo.
