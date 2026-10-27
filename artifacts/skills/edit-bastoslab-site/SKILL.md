@@ -30,6 +30,9 @@ Each page repeats the same header and footer (no templating). A nav or footer ch
 
 Or append one object to `assets/projects.js` by hand: `{name, description, url, tags}`. Cards render **two per row, in list order**
 (one column under 600 px), so keep a project's docs card and replications card adjacent.
+Full flows, including creating the project's repo and publishing it to GitHub Pages first: `artifacts/add-a-project.md`
+(projects) and `artifacts/add-a-slide.md` (slide decks; default to hosting the deck in its own repo). Verify the card's URL
+loads before adding it. `add-card.ps1` is Windows PowerShell; on another OS edit `assets/projects.js` by hand.
 House wording: docs cards say "The documentation of X for <purpose>."; replication cards say
 "The replication and validation records of X." Do not use the word "dashboard" on the site.
 

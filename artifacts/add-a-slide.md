@@ -4,6 +4,11 @@ A "slide" here is an HTML slide deck: reveal.js, Slidev, Marp, or your own JS/TS
 source language, the build output is static files with an `index.html`, and that is all GitHub Pages and a Lab card need.
 The card just links to the deck's URL, so a deck is still "gh-pages", exactly like any other project.
 
+**Default (and what coding agents should do unless told otherwise): option A, the deck in its own repo.** Use B only when
+the user explicitly asks for the deck to live in this repo. Agent flow in short: publish the deck to its own `gh-pages`,
+confirm its URL returns the deck, run `add-card.ps1` with that URL and `-Tags slides`, check the Lab page with
+`preview.ps1`, commit, and push only if asked. Never add a card whose URL has not been checked.
+
 Pick where the deck lives:
 
 | | A. Its own repo (recommended) | B. Inside this repo |
