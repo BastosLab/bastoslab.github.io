@@ -48,6 +48,16 @@ fonts) count against the repo size, so prefer A for anything heavy.
 
 ## C. Add the card
 
+```bash
+python3 artifacts/tools/add_card.py \
+  --subject "my-talk slides" \
+  --desc "The slides of my-talk." \
+  --url "https://bastoslab.github.io/slides/my-talk/" \
+  --image "assets/preview.png" \
+  --presentation
+```
+
+Alternatively, use PowerShell on Windows:
 ```powershell
 .\artifacts\tools\add-card.ps1 -Name "my-talk slides" -Description "The slides of my-talk." -Url "https://bastoslab.github.io/slides/my-talk/" -Tags slides
 ```
