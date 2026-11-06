@@ -1,0 +1,703 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Bastos × Chao Lab Map</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: summary strip → 3D graph with side inspector → shared/unique map → distance matrix → collaboration ideas → method */
+:root{
+  --bg:#f4f6f8; --panel:#ffffff; --ink:#15181d; --muted:#5a616c; --line:#dde1e7; --dim:#c9ced6;
+  --bastos:#2a78d6; --chao:#eb6834; --shared:#1baf7a; --graphbg:#fbfcfd;
+  --f-display:"Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
+  --f-body:"Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0e1014; --panel:#161a20; --ink:#eceef2; --muted:#a3a9b4; --line:#2a3039; --dim:#39404b;
+  --bastos:#3987e5; --chao:#d95926; --shared:#199e70; --graphbg:#11141a; color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#0e1014; --panel:#161a20; --ink:#eceef2; --muted:#a3a9b4; --line:#2a3039; --dim:#39404b;
+  --bastos:#3987e5; --chao:#d95926; --shared:#199e70; --graphbg:#11141a; color-scheme:dark }
+html,body{background:var(--bg);color:var(--ink)}
+body{font-family:var(--f-body);font-size:16px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 64px}
+.wrap{max-width:1240px;margin:0 auto;display:flex;flex-direction:column;gap:40px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;line-height:1.15}
+h1{font-size:clamp(28px,4vw,40px);font-weight:700}
+h2{font-size:24px;font-weight:700}
+h3{font-size:17px;font-weight:700}
+p{margin:0}
+.lede{color:var(--muted);max-width:68ch;margin-top:8px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.sec-head{display:flex;flex-direction:column;gap:6px;margin-bottom:16px}
+.sec-head p{color:var(--muted);max-width:72ch}
+.num{font-variant-numeric:tabular-nums;font-family:var(--f-mono)}
+
+/* summary strip */
+.stats{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+@media (max-width:1000px){.stats{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:520px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.stat{background:var(--panel);padding:14px 16px;display:flex;flex-direction:column;gap:2px}
+.stat b{font-family:var(--f-mono);font-size:26px;font-weight:600;font-variant-numeric:tabular-nums}
+.stat span{font-size:13px;color:var(--muted)}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;vertical-align:baseline;margin-right:6px}
+.dot.b{background:var(--bastos)} .dot.c{background:var(--chao)} .dot.s{background:var(--shared)}
+
+/* graph */
+.graph-grid{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px}
+@media (max-width:900px){.graph-grid{grid-template-columns:minmax(0,1fr)}}
+.controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--panel)}
+.seg button{font:inherit;font-size:14px;border:0;background:transparent;color:var(--muted);padding:6px 12px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--panel)}
+.seg button:focus-visible,.chip:focus-visible,.btn:focus-visible,select:focus-visible{outline:2px solid var(--bastos);outline-offset:2px}
+.btn{font:inherit;font-size:14px;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:6px 12px;border-radius:8px;cursor:pointer}
+select{font:inherit;font-size:14px;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:6px 8px;border-radius:8px}
+label.chk{font-size:14px;color:var(--muted);display:inline-flex;gap:6px;align-items:center}
+#graph-box{position:relative;height:620px;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--graphbg)}
+@media (max-width:600px){#graph-box{height:460px}}
+#graph{position:absolute;inset:0}
+#labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.lbl{position:absolute;left:0;top:0;white-space:nowrap;font-size:11px;color:var(--muted);transform-origin:0 0;will-change:transform}
+.lbl.person{font-family:var(--f-display);font-weight:700;font-size:13px;color:var(--ink);text-shadow:0 0 3px var(--graphbg),0 0 3px var(--graphbg)}
+.lbl.concept{text-shadow:0 0 3px var(--graphbg)}
+.lbl.faded{opacity:.25}
+.legend{position:absolute;left:12px;bottom:10px;display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--muted);background:color-mix(in srgb,var(--graphbg) 85%,transparent);padding:4px 8px;border-radius:6px}
+.hint{position:absolute;right:12px;bottom:10px;font-size:12px;color:var(--muted)}
+#fallback{position:absolute;inset:0;display:none;align-items:center;justify-content:center;text-align:center;padding:24px;color:var(--muted)}
+
+.inspector{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px;max-height:666px;overflow:auto;min-width:0}
+.inspector .role{color:var(--muted);font-size:14px}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-family:var(--f-mono);padding:2px 8px;border-radius:999px;border:1px solid var(--line);color:var(--ink)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font:inherit;font-size:13px;line-height:1.3;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:3px 9px;border-radius:999px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;text-align:left}
+.chip:hover{border-color:var(--muted)}
+.chip .dot{margin:0;width:8px;height:8px;flex:none}
+.kv{display:grid;grid-template-columns:auto 1fr auto;gap:4px 10px;font-size:14px;align-items:center}
+.bar{height:6px;border-radius:3px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--muted);border-radius:3px}
+.small{font-size:13px;color:var(--muted)}
+
+/* concept map */
+.cmap{display:grid;grid-template-columns:1fr 1.5fr 1fr;gap:16px}
+@media (max-width:900px){.cmap{grid-template-columns:minmax(0,1fr)}}
+.col{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.col-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;border-bottom:2px solid var(--line);padding-bottom:8px}
+.col.b .col-head{border-color:var(--bastos)} .col.s .col-head{border-color:var(--shared)} .col.c .col-head{border-color:var(--chao)}
+.grp{display:flex;flex-direction:column;gap:6px}
+.grp .eyebrow{font-size:11px}
+.ccount{font-family:var(--f-mono);font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+
+/* matrix */
+.mx-wrap{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;overflow-x:auto}
+.mx-wrap svg text{fill:var(--ink);font-family:var(--f-body)}
+.mx-wrap svg .muted{fill:var(--muted)}
+.tip{position:fixed;pointer-events:none;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px;box-shadow:0 4px 18px rgba(0,0,0,.15);max-width:280px;z-index:20}
+.two{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:16px}
+@media (max-width:900px){.two{grid-template-columns:minmax(0,1fr)}}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--f-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+td.r{text-align:right}
+
+/* collab */
+.ideas{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:16px}
+@media (max-width:420px){.ideas{grid-template-columns:minmax(0,1fr)}}
+.idea{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.idea .fit{font-family:var(--f-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase}
+.idea .fit.hi{color:var(--shared)} .idea .fit.md{color:var(--muted)}
+.idea p{font-size:15px}
+.idea .step{font-size:14px;color:var(--muted)}
+.idea .step b{color:var(--ink);font-weight:600}
+.method{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:8px;font-size:15px;color:var(--muted)}
+.method b{color:var(--ink)}
+/* utah bridge */
+.bridge{position:relative;display:grid;grid-template-columns:150px 200px minmax(0,1fr) 200px 150px;gap:36px}
+@media (max-width:1100px){.bridge{grid-template-columns:minmax(0,1fr);gap:16px}.bridge svg.wires{display:none}}
+.people{display:flex;flex-direction:column;gap:6px;position:relative;z-index:1;min-width:0}
+.up{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:5px 9px;font-size:13px;line-height:1.25;cursor:pointer;display:flex;flex-direction:column;transition:opacity .15s,border-color .15s}
+.up b{font-weight:600}
+.up small{font-size:11px;color:var(--muted)}
+.people.c .up{border-right:4px solid var(--chao)} .people.b .up{border-left:4px solid var(--bastos)}
+.bridge svg.wires path.pl{stroke-width:1;opacity:.22}
+.bridge svg.wires path.pl.on{stroke-width:1.8;opacity:.9}
+.bridge svg.wires{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+.bridge svg.wires path{fill:none;stroke-width:1.4;opacity:.4;transition:opacity .15s,stroke-width .15s}
+.bridge svg.wires path.on{opacity:.95;stroke-width:2.4}
+.bridge svg.wires path.off{opacity:.08}
+.side{display:flex;flex-direction:column;gap:8px;position:relative;z-index:1;min-width:0}
+.side-head{border-bottom:2px solid var(--line);padding-bottom:6px;margin-bottom:4px}
+.side.c .side-head{border-color:var(--chao)} .side.b .side-head{border-color:var(--bastos)}
+.side .note{font-size:13px;color:var(--muted)}
+.uc{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-size:14px;line-height:1.3;cursor:pointer;display:flex;flex-direction:column;gap:2px;transition:opacity .15s,border-color .15s}
+.side.c .uc{border-left:4px solid var(--chao)} .side.b .uc{border-left:4px solid var(--bastos)}
+.uc small{font-size:12px;color:var(--muted)}
+.mid{display:flex;flex-direction:column;gap:12px;position:relative;z-index:1;min-width:0}
+.ground{background:var(--panel);border:1px dashed var(--shared);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+.exp{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;cursor:pointer;transition:opacity .15s,border-color .15s}
+.exp h3{font-size:16px}
+.exp p{font-size:14px;color:var(--muted)}
+.exp .uses{display:flex;flex-wrap:wrap;gap:4px}
+.tag{font-size:11px;font-family:var(--f-mono);padding:1px 7px;border-radius:999px;border:1px solid var(--line);color:var(--muted);display:inline-flex;align-items:center;gap:5px}
+.tag .dot{margin:0;width:7px;height:7px}
+.bridge .on{border-color:var(--ink)}
+.bridge .off{opacity:.3}
+.team{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.team-row{display:grid;grid-template-columns:minmax(0,190px) minmax(0,1fr);gap:4px 12px;align-items:center;font-size:14px}
+@media (max-width:520px){.team-row{grid-template-columns:minmax(0,1fr)}}
+.team-row .role{color:var(--muted)}
+.team-row.lead{font-weight:600}
+/* questions */
+.qtier{display:flex;flex-direction:column;gap:12px}
+.qtier + .qtier{margin-top:28px}
+.qtier-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.qgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:16px}
+@media (max-width:440px){.qgrid{grid-template-columns:minmax(0,1fr)}}
+.qcard{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.qcard.drop{opacity:.75}
+.qnum{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.qcard h3{font-size:18px;line-height:1.25}
+.qcard p{font-size:15px}
+.qcard .lbl2{font-family:var(--f-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:2px}
+.checks{display:flex;flex-wrap:wrap;gap:6px}
+.check{font-family:var(--f-mono);font-size:12px;padding:2px 8px;border-radius:999px;border:1px solid var(--line);display:inline-flex;gap:5px;align-items:center}
+.check.ok{border-color:var(--shared)} .check.no{border-color:var(--chao)}
+.check .mk{font-weight:600}
+.check.ok .mk{color:var(--shared)} .check.no .mk{color:var(--chao)}
+details.more{font-size:14px;color:var(--muted)}
+details.more summary{cursor:pointer;color:var(--ink);font-weight:600}
+details.more summary:focus-visible{outline:2px solid var(--bastos);outline-offset:2px}
+details.more div{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+details.more b{color:var(--ink)}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Vanderbilt · Bastos lab &nbsp;×&nbsp; IRCN Tokyo · Chao lab</div>
+    <h1>Bastos × Chao Lab Map</h1>
+    <p class="lede">Fourteen CVs (Bastos, Xiong, Nejat; Zenas Chao and ten Chao-lab members) coded onto 45 concepts covering theory, methods, analysis, modeling and clinical work. Similarity between two people is the Jaccard overlap of their concept sets. Click any person, concept or idea to light it up in the graph.</p>
+  </header>
+
+  <section class="stats" id="stats" aria-label="Summary"></section>
+
+  <section>
+    <div class="sec-head">
+      <div class="eyebrow">Graph</div>
+      <h2>Concept space</h2>
+      <p>People are large nodes and concepts are small ones. Concepts both labs hold settle between the two clusters; concepts only one lab holds hang off its side. Switch to <b>Distance</b> to drop the concepts and place people by pairwise Jaccard distance alone.</p>
+    </div>
+    <div class="controls">
+      <div class="seg" role="group" aria-label="Graph mode">
+        <button id="m-concept" aria-pressed="true">People + concepts</button>
+        <button id="m-dist" aria-pressed="false">Distance</button>
+      </div>
+      <select id="f-group" aria-label="Concept category">
+        <option value="all">All categories</option>
+        <option>Theory</option><option>Method</option><option>Analysis</option><option>Modeling</option><option>Clinical</option>
+      </select>
+      <label class="chk"><input type="checkbox" id="c-labels"> All concept labels</label>
+      <label class="chk"><input type="checkbox" id="c-spin"> Rotate</label>
+      <button class="btn" id="b-reset">Reset view</button>
+    </div>
+    <div class="graph-grid">
+      <div id="graph-box">
+        <div id="graph"></div>
+        <div id="labels"></div>
+        <div class="legend"><span><i class="dot b"></i>Bastos lab / only</span><span><i class="dot c"></i>Chao lab / only</span><span><i class="dot s"></i>Shared concept</span></div>
+        <div class="hint">drag to orbit · scroll to zoom</div>
+        <div id="fallback">The 3D view needs WebGL, which this browser has turned off. The tables below carry the same information.</div>
+      </div>
+      <aside class="inspector" id="inspector" aria-live="polite"></aside>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <div class="eyebrow">Conceptual map</div>
+      <h2>What is shared, what is unique</h2>
+      <p>Each concept sits in the column of the lab(s) that hold it. The counts give how many members of each lab carry it (Bastos of 3, Chao of 11), so a shared concept held by one person on one side reads as a thin bridge.</p>
+    </div>
+    <div class="cmap" id="cmap"></div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <div class="eyebrow">Distances</div>
+      <h2>Who is close to whom</h2>
+      <p>Pairwise Jaccard similarity (1 − distance). Darker cells mean more shared concepts. Rows are ordered Bastos lab first, then Chao lab by closeness to the Bastos lab.</p>
+    </div>
+    <div class="two">
+      <div class="mx-wrap" id="matrix"></div>
+      <div class="mx-wrap"><h3 style="margin-bottom:8px">Closest cross-lab partner</h3><table id="nn"></table></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <div class="eyebrow">Collaboration</div>
+      <h2>Where the labs fit together</h2>
+      <p>Ten concrete projects, each tied to papers on the CVs. Click a card to highlight its people in the graph.</p>
+    </div>
+    <div class="ideas" id="ideas"></div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <div class="eyebrow">New project · UChicago human Utah arrays, M1 + S1</div>
+      <h2>The Utah-array bridge</h2>
+      <p>People sit on the outside: the Chao lab on the left, the Bastos lab on the right. Next to them are the concepts only their lab holds, and the shared project is in the middle. Thin lines run from each person to the common-ground concepts they bring; thicker lines show which lab-specific strengths each experiment draws on. Hover or tap a person, concept or experiment to trace its links.</p>
+    </div>
+    <div class="bridge" id="bridge">
+      <svg class="wires" id="wires" aria-hidden="true"></svg>
+      <div class="people c" id="ppl-c"><div class="side-head" style="border-color:var(--chao)"><div class="eyebrow">Chao lab</div><h3>People</h3></div></div>
+      <div class="side c" id="side-c"><div class="side-head"><div class="eyebrow">Chao lab brings</div><h3>Human paradigms, timing, motor &amp; BCI</h3></div></div>
+      <div class="mid" id="mid"></div>
+      <div class="side b" id="side-b"><div class="side-head"><div class="eyebrow">Bastos lab brings</div><h3>NHP laminar comparison, cell types, models, data</h3></div></div>
+      <div class="people b" id="ppl-b"><div class="side-head" style="border-color:var(--bastos)"><div class="eyebrow">Bastos lab</div><h3>People</h3></div></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <div class="eyebrow">New project · questions</div>
+      <h2>Questions only this platform can answer</h2>
+      <p>Twelve candidates came from four independent brainstorms: mechanism of prediction, subjective report, action and body, and cross-scale bridges. Three adversarial reviewers then checked each one. <b>Novelty</b> is a literature search for whether the question is already answered. <b>Necessity</b> asks whether the Bastos lab alone, the Chao lab alone, or epilepsy microwire recordings could answer it. <b>Feasibility</b> asks whether it works in tetraplegic Utah-array participants with S1 stimulation and limited session time. Scores are out of 10. The literature checks are one reviewer's web searches and have not been confirmed independently.</p>
+    </div>
+    <div id="questions"></div>
+  </section>
+
+  <section class="method">
+    <h3 style="color:var(--ink)">How this was built</h3>
+    <p><b>Coding.</b> Each CV was read and coded by hand onto 45 concepts (listed in the inspector for every person). A concept was coded when the CV shows a paper, preprint, poster, project or listed skill in it. Stated interests count only when there is no other evidence for that person (for example, Sali Rahman's interest in predictive processing).</p>
+    <p><b>Distance.</b> Jaccard similarity = shared concepts ÷ concepts held by either person; distance = 1 − similarity. Every concept counts equally, so a PI with a long CV overlaps more with everyone.</p>
+    <p><b>Caveats.</b> CVs differ in length and detail; trainee CVs list fewer areas. Heng Zhang's current position is Kyushu University; he is included because his CV was in the Chao-lab set and he co-authors with Zenas Chao.</p>
+  </section>
+</div>
+<div class="tip" id="tip" hidden></div>
+
+<script src="https://unpkg.com/3d-force-graph@1.73.4/dist/3d-force-graph.min.js"></script>
+<script>
+const DATA = {"people": [{"id": "AB", "name": "André Bastos", "lab": "Bastos", "role": "PI · Asst. Prof., Vanderbilt", "summary": "Laminar, multi-area NHP + mouse recordings (MaDeLaNe); predictive routing; spectrolaminar motif; propofol & consciousness; DCM/Granger methods; inhibitory cell types.", "tags": ["pc", "pe", "omit", "hier", "osc", "lam", "cell", "consc", "wm", "plast", "nhplam", "nhpecog", "mouse", "nhpopto", "histo", "hecog", "stim", "pharm", "conn", "spec", "opendata", "snn", "biophys", "llm", "psych"]}, {"id": "SX", "name": "Yihan Sophy Xiong", "lab": "Bastos", "role": "Postdoc, Vanderbilt", "summary": "Propofol LOC disrupts predictive routing (PNAS); hierarchical substrates of prediction in visual spiking (mouse + monkey); alpha/beta inhibition; IHC & NHP opto.", "tags": ["pc", "pe", "omit", "hier", "osc", "lam", "cell", "consc", "wm", "nhplam", "mouse", "nhpopto", "histo", "pharm", "spec", "decode", "opendata", "psych"]}, {"id": "HN", "name": "Hamed Nejat", "lab": "Bastos", "role": "PhD candidate, Vanderbilt", "summary": "Self-supervised biophysical models of predictive routing (JAX/Jaxley); omission responses; NWB tooling; ontology-constrained multi-LLM literature scoring.", "tags": ["pc", "omit", "hier", "osc", "lam", "plast", "nhplam", "hecog", "eeg", "conn", "spec", "decode", "dl", "opendata", "snn", "biophys", "llm", "soft"]}, {"id": "ZC", "name": "Zenas Chao", "lab": "Chao", "role": "PI · Assoc. Prof., IRCN U. Tokyo", "summary": "Large-scale ECoG networks for hierarchical prediction (Neuron 2018); frequency ordering of prediction/PE signals; ASD marmoset model; creativity & O₂; cultures, spiking & GPT-4 methods.", "tags": ["pc", "pe", "omit", "hier", "when", "osc", "consc", "xmod", "creat", "motor", "crit", "plast", "nhpecog", "cult", "hecog", "eeg", "fmri", "fnirs", "stim", "conn", "spec", "decode", "snn", "reservoir", "llm", "psych", "bci"]}, {"id": "YTH", "name": "Yiyuan Teresa Huang", "lab": "Chao", "role": "Project Asst. Prof., IRCN", "summary": "Hierarchical & crossmodal PC in human EEG/ECoG; MMN subcomponents; timing statistics (PLOS Biol 2025); ASD/ADHD; fNIRS in children.", "tags": ["pc", "pe", "hier", "when", "osc", "xmod", "creat", "hecog", "eeg", "fmri", "fnirs", "stim", "conn", "spec", "bayes", "psych"]}, {"id": "AY", "name": "Amit Yaron", "lab": "Chao", "role": "Research fellow, NCNP Tokyo", "summary": "Rat auditory cortex SSA & complex regularities (Neuron 2012); omission-responsive neurons (PLOS Biol 2025); macaque spinal modules; cultures.", "tags": ["pc", "pe", "omit", "hier", "motor", "mouse", "cult", "conn", "decode", "dl"]}, {"id": "TLL", "name": "Tzu-Ling Liu", "lab": "Chao", "role": "Project researcher, IRCN", "summary": "EEG & TMS/tACS in cognition and emotion; GSR/HRV markers of creative potential; closed-loop EEG creativity interventions.", "tags": ["creat", "emo", "wm", "eeg", "physio", "stim", "crit", "psych", "bci"]}, {"id": "YY", "name": "Yohei Yamada", "lab": "Chao", "role": "Research specialist, IRCN", "summary": "What/when predictions via error-modulated plasticity in reservoir spiking networks; earlier TMS-EEG attention work (Nat Neurosci 2009).", "tags": ["pc", "pe", "when", "wm", "plast", "eeg", "stim", "snn", "reservoir"]}, {"id": "HZ", "name": "Heng Zhang", "lab": "Chao", "role": "Postdoc (Kyushu U.; Chao-lab collaborator)", "summary": "Self-organizing dynamical systems (SyncMap), reservoir computing, robust unsupervised learning; noise-driven predictive networks with Chao.", "tags": ["pc", "crit", "plast", "decode", "dl", "reservoir", "soft"]}, {"id": "SC", "name": "Shengbin Cui", "lab": "Chao", "role": "PhD (Osaka) → Chao lab", "summary": "Heartbeat-evoked potentials & moral decisions; MEG orientation decoding (IEM); stream/bounce crossmodal perception.", "tags": ["emo", "dec", "xmod", "eeg", "meg", "fmri", "physio", "decode", "dl"]}, {"id": "LYZ", "name": "Leah Yeon Zheng", "lab": "Chao", "role": "PhD student, U. Tokyo", "summary": "Computational psychiatry: valuation sensitivity & compulsivity (OCD); state-space models of spatio-temporal sensorimotor adaptation.", "tags": ["dec", "motor", "when", "bayes", "psych"]}, {"id": "CP", "name": "Chatrin Phunruangsakao", "lab": "Chao", "role": "Project researcher, IRCN", "summary": "EEG connectivity & motor-imagery BCI (deep learning); incubation, memory reactivation and insight; creativity BMI.", "tags": ["creat", "motor", "eeg", "conn", "spec", "decode", "dl", "bci"]}, {"id": "SR", "name": "Sali Rahman", "lab": "Chao", "role": "PhD student, U. Tokyo", "summary": "Mouse BLA→claustrum circuits in social behavior; optogenetics, stereotaxic surgery, histology; interest in claustrum, PC & consciousness.", "tags": ["pc", "consc", "emo", "rodcirc", "histo"]}, {"id": "ZZ", "name": "Zhuo Zhang", "lab": "Chao", "role": "Postdoc, IRCN", "summary": "Deviance detection emerging in cortical cultures on 1,024-ch CMOS-MEA; NMDA pharmacology; criticality; spiking models (Brian2); EEG attention decoding.", "tags": ["pc", "pe", "crit", "plast", "cult", "eeg", "pharm", "decode", "dl", "snn"]}], "concepts": [{"id": "pc", "label": "Predictive coding / processing", "group": "Theory", "who": ["AB", "SX", "HN", "ZC", "YTH", "AY", "YY", "HZ", "SR", "ZZ"], "owner": "shared"}, {"id": "pe", "label": "Prediction error · oddball · MMN", "group": "Theory", "who": ["AB", "SX", "ZC", "YTH", "AY", "YY", "ZZ"], "owner": "shared"}, {"id": "omit", "label": "Omission responses", "group": "Theory", "who": ["AB", "SX", "HN", "ZC", "AY"], "owner": "shared"}, {"id": "hier", "label": "Hierarchical (local/global) prediction", "group": "Theory", "who": ["AB", "SX", "HN", "ZC", "YTH", "AY"], "owner": "shared"}, {"id": "when", "label": "Temporal ('when') prediction", "group": "Theory", "who": ["ZC", "YTH", "YY", "LYZ"], "owner": "Chao"}, {"id": "osc", "label": "Frequency-specific oscillations", "group": "Theory", "who": ["AB", "SX", "HN", "ZC", "YTH"], "owner": "shared"}, {"id": "lam", "label": "Cortical layers / laminar circuits", "group": "Theory", "who": ["AB", "SX", "HN"], "owner": "Bastos"}, {"id": "cell", "label": "Cell types · inhibitory interneurons", "group": "Theory", "who": ["AB", "SX"], "owner": "Bastos"}, {"id": "consc", "label": "Consciousness · anesthesia", "group": "Theory", "who": ["AB", "SX", "ZC", "SR"], "owner": "shared"}, {"id": "wm", "label": "Working memory · attention", "group": "Theory", "who": ["AB", "SX", "TLL", "YY"], "owner": "shared"}, {"id": "xmod", "label": "Multisensory · crossmodal", "group": "Theory", "who": ["ZC", "YTH", "SC"], "owner": "Chao"}, {"id": "creat", "label": "Creativity · insight", "group": "Theory", "who": ["ZC", "YTH", "TLL", "CP"], "owner": "Chao"}, {"id": "emo", "label": "Emotion · interoception · social", "group": "Theory", "who": ["TLL", "SC", "SR"], "owner": "Chao"}, {"id": "dec", "label": "Decision-making · RL · valuation", "group": "Theory", "who": ["SC", "LYZ"], "owner": "Chao"}, {"id": "motor", "label": "Motor control · sensorimotor adaptation", "group": "Theory", "who": ["ZC", "AY", "LYZ", "CP"], "owner": "Chao"}, {"id": "crit", "label": "Criticality · self-organization", "group": "Theory", "who": ["ZC", "TLL", "HZ", "ZZ"], "owner": "Chao"}, {"id": "plast", "label": "Plasticity · learning rules", "group": "Theory", "who": ["AB", "HN", "ZC", "YY", "HZ", "ZZ"], "owner": "shared"}, {"id": "nhplam", "label": "NHP laminar / high-density ephys", "group": "Method", "who": ["AB", "SX", "HN"], "owner": "Bastos"}, {"id": "nhpecog", "label": "NHP ECoG", "group": "Method", "who": ["AB", "ZC"], "owner": "shared"}, {"id": "mouse", "label": "Rodent electrophysiology", "group": "Method", "who": ["AB", "SX", "AY"], "owner": "shared"}, {"id": "rodcirc", "label": "Rodent circuit tools (opto, stereotaxic)", "group": "Method", "who": ["SR"], "owner": "Chao"}, {"id": "nhpopto", "label": "NHP optogenetics", "group": "Method", "who": ["AB", "SX"], "owner": "Bastos"}, {"id": "histo", "label": "Histology · IHC · light-sheet", "group": "Method", "who": ["AB", "SX", "SR"], "owner": "shared"}, {"id": "cult", "label": "Neuronal cultures · CMOS-MEA", "group": "Method", "who": ["ZC", "AY", "ZZ"], "owner": "Chao"}, {"id": "hecog", "label": "Human ECoG / iEEG", "group": "Method", "who": ["AB", "HN", "ZC", "YTH"], "owner": "shared"}, {"id": "eeg", "label": "Human EEG / ERP", "group": "Method", "who": ["HN", "ZC", "YTH", "TLL", "YY", "SC", "CP", "ZZ"], "owner": "shared"}, {"id": "meg", "label": "MEG", "group": "Method", "who": ["SC"], "owner": "Chao"}, {"id": "fmri", "label": "fMRI", "group": "Method", "who": ["ZC", "YTH", "SC"], "owner": "Chao"}, {"id": "fnirs", "label": "fNIRS", "group": "Method", "who": ["ZC", "YTH"], "owner": "Chao"}, {"id": "physio", "label": "Peripheral physiology (ECG, GSR, HRV)", "group": "Method", "who": ["TLL", "SC"], "owner": "Chao"}, {"id": "stim", "label": "Brain stimulation · interventions (DBS, TMS, tACS, O₂)", "group": "Method", "who": ["AB", "ZC", "YTH", "TLL", "YY"], "owner": "shared"}, {"id": "pharm", "label": "Pharmacology (propofol, NMDA, ACh)", "group": "Method", "who": ["AB", "SX", "ZZ"], "owner": "shared"}, {"id": "conn", "label": "Functional connectivity (Granger, coherence, DCM)", "group": "Analysis", "who": ["AB", "HN", "ZC", "YTH", "AY", "CP"], "owner": "shared"}, {"id": "spec", "label": "Spectral / time-frequency analysis", "group": "Analysis", "who": ["AB", "SX", "HN", "ZC", "YTH", "CP"], "owner": "shared"}, {"id": "decode", "label": "Decoding · machine learning", "group": "Analysis", "who": ["SX", "HN", "ZC", "AY", "HZ", "SC", "CP", "ZZ"], "owner": "shared"}, {"id": "dl", "label": "Deep learning", "group": "Analysis", "who": ["HN", "AY", "HZ", "SC", "CP", "ZZ"], "owner": "shared"}, {"id": "opendata", "label": "Open / large-scale datasets (OpenScope, NWB)", "group": "Analysis", "who": ["AB", "SX", "HN"], "owner": "Bastos"}, {"id": "snn", "label": "Spiking network models", "group": "Modeling", "who": ["AB", "HN", "ZC", "YY", "ZZ"], "owner": "shared"}, {"id": "biophys", "label": "Biophysical · neural-mass · DCM models", "group": "Modeling", "who": ["AB", "HN"], "owner": "Bastos"}, {"id": "reservoir", "label": "Reservoir computing · self-organizing AI", "group": "Modeling", "who": ["ZC", "YY", "HZ"], "owner": "Chao"}, {"id": "bayes", "label": "Bayesian / RL / state-space behavioral models", "group": "Modeling", "who": ["YTH", "LYZ"], "owner": "Chao"}, {"id": "llm", "label": "LLMs · AI tools for science", "group": "Modeling", "who": ["AB", "HN", "ZC"], "owner": "shared"}, {"id": "soft", "label": "Research software packages", "group": "Modeling", "who": ["HN", "HZ"], "owner": "shared"}, {"id": "psych", "label": "Psychiatric & developmental disorders", "group": "Clinical", "who": ["AB", "SX", "ZC", "YTH", "TLL", "LYZ"], "owner": "shared"}, {"id": "bci", "label": "BCI · closed-loop systems", "group": "Clinical", "who": ["ZC", "TLL", "CP"], "owner": "Chao"}], "dist": [[0.0, 0.346, 0.517, 0.595, 0.719, 0.793, 0.903, 0.786, 0.933, 1.0, 0.966, 0.935, 0.889, 0.833], [0.346, 0.0, 0.667, 0.75, 0.786, 0.727, 0.92, 0.875, 0.913, 0.962, 0.955, 0.917, 0.85, 0.833], [0.517, 0.667, 0.0, 0.636, 0.741, 0.727, 0.962, 0.826, 0.75, 0.875, 1.0, 0.762, 0.955, 0.727], [0.595, 0.75, 0.636, 0.0, 0.464, 0.724, 0.8, 0.714, 0.828, 0.875, 0.897, 0.75, 0.933, 0.724], [0.719, 0.786, 0.741, 0.464, 0.0, 0.818, 0.81, 0.75, 0.955, 0.864, 0.833, 0.8, 0.95, 0.87], [0.793, 0.727, 0.727, 0.724, 0.818, 0.0, 1.0, 0.882, 0.786, 0.882, 0.929, 0.714, 0.929, 0.667], [0.903, 0.92, 0.962, 0.8, 0.81, 1.0, 0.0, 0.8, 0.933, 0.8, 0.923, 0.786, 0.923, 0.882], [0.786, 0.875, 0.826, 0.714, 0.75, 0.882, 0.8, 0.0, 0.769, 0.941, 0.923, 0.938, 0.923, 0.643], [0.933, 0.913, 0.75, 0.828, 0.955, 0.786, 0.933, 0.769, 0.0, 0.857, 1.0, 0.846, 0.909, 0.583], [1.0, 0.962, 0.875, 0.875, 0.864, 0.882, 0.8, 0.941, 0.857, 0.0, 0.923, 0.786, 0.923, 0.812], [0.966, 0.955, 1.0, 0.897, 0.833, 0.929, 0.923, 0.923, 1.0, 0.923, 0.0, 0.917, 1.0, 1.0], [0.935, 0.917, 0.762, 0.75, 0.8, 0.714, 0.786, 0.938, 0.846, 0.786, 0.917, 0.0, 1.0, 0.8], [0.889, 0.85, 0.955, 0.933, 0.95, 0.929, 0.923, 0.923, 0.909, 0.923, 1.0, 1.0, 0.0, 0.929], [0.833, 0.833, 0.727, 0.724, 0.87, 0.667, 0.882, 0.643, 0.583, 0.812, 1.0, 0.8, 0.929, 0.0]]};
+const IDEAS = [
+ {t:"Omission responses across species and scales", fit:"hi", who:["AY","ZC","HN","SX","AB","ZZ"], c:["omit","pe","nhplam","mouse","cult"],
+  why:"Yaron & Chao found rat auditory-cortex neurons that fire to omitted sounds (PLOS Biol 2025; EJN 2026 review). Nejat & Xiong map single-neuron omission responses across the macaque visual hierarchy with laminar probes.",
+  step:"Run one omission metric on rat A1, cultured networks and macaque laminar data, and compare which layers and rhythms carry it. A joint omission paper is the obvious first product."},
+ {t:"Predictive routing vs. the frequency-ordering model", fit:"hi", who:["AB","SX","ZC","YTH"], c:["osc","pe","hecog","spec"],
+  why:"Bastos's predictive routing puts predictions in alpha/beta and errors in gamma (PNAS 2020, 2024). Chao's quantitative model finds a frequency ordering of prediction and error signals in human ECoG (Comm Biol 2022), and Huang shows high-frequency activity tracks hierarchical errors.",
+  step:"Swap datasets: fit Chao's model to MaDeLaNe laminar LFP, and run routing and spectrolaminar analyses on Chao's human ECoG local–global data."},
+ {t:"Local–global oddballs from network to layer", fit:"hi", who:["AB","SX","ZC","YTH"], c:["hier","nhpecog","nhplam","conn"],
+  why:"Chao & Dehaene mapped large-scale ECoG networks for hierarchical prediction in macaques (Neuron 2018). Xiong, Westerberg & Bastos find global prediction errors emerge late in the hierarchy in laminar and mouse Neuropixels spiking (Nat Neurosci, in revision).",
+  step:"Write a joint grant (e.g., NSF–JSPS or HFSP) linking whole-hemisphere ECoG network mining to laminar microcircuits in the same paradigm."},
+ {t:"'When' as well as 'what' predictions", fit:"md", who:["YTH","YY","AB","HN"], c:["when","snn","nhplam"],
+  why:"Huang shows the brain combines timing statistics at several levels (PLOS Biol 2025), and Yamada's spiking networks encode what and when jointly through error-modulated plasticity. Bastos-lab tasks manipulate stimulus identity, not timing.",
+  step:"Add timing manipulations to the macaque laminar task; use Yamada's model to predict which layers and bands should carry timing errors."},
+ {t:"Inhibition, criticality and plasticity models constrained by laminar data", fit:"hi", who:["HN","ZZ","YY","HZ","AB"], c:["cell","crit","plast","snn","biophys"],
+  why:"Chao-lab models link inhibitory connectivity to criticality (PLOS Comp Biol 2026) and short-term plasticity to deviance detection (2023). Bastos's NSF CAREER targets inhibition in predictive routing, with laminar PV/CB/CR cell-type maps; Nejat builds trainable biophysical models in JAX.",
+  step:"Constrain Chao-lab spiking networks with Bastos laminar cell-type densities and the spectrolaminar motif, then fit them in Nejat's JaxFNE."},
+ {t:"Cultured networks as a reduced test bed", fit:"md", who:["ZZ","AY","SX","AB"], c:["cult","pharm","osc"],
+  why:"Zhang & Yaron show deviance detection emerging in dissociated cortical cultures on 1,024-channel CMOS-MEAs, with NMDA pharmacology. Xiong & Bastos show propofol (GABA-A) breaks predictive routing in vivo.",
+  step:"Ask whether a beta/gamma routing motif appears in cultures, and contrast GABA-A against NMDA manipulation on deviance detection."},
+ {t:"Computational psychiatry of predictive coding", fit:"md", who:["AB","ZC","YTH","LYZ"], c:["psych","bayes","cell"],
+  why:"Chao found disordered predictive coding in a marmoset autism model (Comm Biol 2024); Huang studies ASD and ADHD; Zheng models compulsivity. Bastos's NARSAD work and the schizophrenia interneuron meta-analysis point to a cell-type mechanism.",
+  step:"Agree on one EEG battery (local–global, omission, timing) for clinical groups and connect its parameters to interneuron findings."},
+ {t:"Consciousness and brain state", fit:"md", who:["SX","AB","ZC","SR"], c:["consc","conn","nhpecog"],
+  why:"Xiong & Bastos show propofol disrupts predictive routing and phase coding (PNAS 2024). Chao's macaque ECoG measured large-scale information flow in conscious vs. unconscious states (PLOS ONE 2013). Rahman wants to study the claustrum.",
+  step:"Reanalyze the anesthesia ECoG with routing metrics; scope a claustrum project for Rahman's PhD."},
+ {t:"LLM methods for scoring scientific ideas", fit:"md", who:["HN","ZC","HZ"], c:["llm","soft"],
+  why:"Nejat's ontology-constrained multi-LLM scoring of the predictive-processing literature (Sci Rep, in press) and Chao-lab GPT-4 scoring of creative ideas (Br J Psychol 2024) solve related problems.",
+  step:"A joint methods paper on the reliability of LLM scoring, and Nejat's ontology run over Chao's predictive-coding review chapter."},
+ {t:"Training and exchange", fit:"md", who:["SX","HN","AB","ZC"], c:["opendata","eeg"],
+  why:"Bastos runs the MaDeLaNe analysis workshop at Vanderbilt; Chao teaches IRCN's Neuro-Inspired AI course. Both PIs spoke at the Tokyo symposium on the Unified Theory of Prediction and Action (March 2026). Xiong speaks Japanese (JLPT N2) and Mandarin.",
+  step:"Invite Chao-lab trainees to MaDeLaNe 2027 and send a Bastos-lab trainee to IRCN for a short visit."},
+];
+
+const P = DATA.people, C = DATA.concepts, D = DATA.dist;
+const byId = {}; P.forEach((p,i)=>{byId[p.id]={...p,kind:"person",idx:i}}); C.forEach(c=>{byId[c.id]={...c,kind:"concept"}});
+const sim = (a,b)=> 1 - D[byId[a].idx][byId[b].idx];
+const nB = P.filter(p=>p.lab==="Bastos").length, nC = P.length-nB;
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+let COL = {};
+function readColors(){ COL = {Bastos:css('--bastos'),Chao:css('--chao'),shared:css('--shared'),dim:css('--dim'),bg:css('--graphbg'),line:css('--line'),muted:css('--muted')}; }
+readColors();
+const esc = s => String(s).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
+const ownerKey = o => o==="Bastos"?"b":o==="Chao"?"c":"s";
+const GROUPS = ["Theory","Method","Analysis","Modeling","Clinical"];
+
+/* ---------- summary ---------- */
+(function(){
+  const cnt = o=>C.filter(c=>c.owner===o).length;
+  const mean = a=>a.reduce((s,x)=>s+x,0)/a.length;
+  const B=P.filter(p=>p.lab==="Bastos"), Z=P.filter(p=>p.lab==="Chao");
+  const between = mean(B.flatMap(a=>Z.map(b=>sim(a.id,b.id))));
+  const pair = (arr)=>{const o=[];for(let i=0;i<arr.length;i++)for(let j=i+1;j<arr.length;j++)o.push(sim(arr[i].id,arr[j].id));return mean(o)};
+  const items = [
+    [cnt("shared"),'<i class="dot s"></i>Shared concepts'],
+    [cnt("Bastos"),'<i class="dot b"></i>Bastos-only concepts'],
+    [cnt("Chao"),'<i class="dot c"></i>Chao-only concepts'],
+    [sim("AB","ZC").toFixed(2),'Bastos–Chao PI similarity'],
+    [between.toFixed(2),'Mean cross-lab similarity'],
+    [pair(B).toFixed(2)+' / '+pair(Z).toFixed(2),'Within-lab similarity (Bastos / Chao)'],
+  ];
+  document.getElementById('stats').innerHTML = items.map(([v,l])=>`<div class="stat"><b>${v}</b><span>${l}</span></div>`).join('');
+})();
+
+/* ---------- inspector ---------- */
+const insp = document.getElementById('inspector');
+function chipFor(cid){ const c=byId[cid]; return `<button class="chip" data-sel="${cid}"><i class="dot ${ownerKey(c.owner)}"></i>${esc(c.label)}</button>`; }
+function personChip(pid){ const p=byId[pid]; return `<button class="chip" data-sel="${pid}"><i class="dot ${p.lab==="Bastos"?"b":"c"}"></i>${esc(p.name)}</button>`; }
+function showDefault(){
+  insp.innerHTML = `<div class="eyebrow">Inspector</div><h3>Pick a node</h3>
+  <p class="small">Click a sphere in the graph, or any name or concept on this page. The inspector lists that person's concepts and closest partners, or which people hold that concept.</p>
+  <div class="eyebrow" style="margin-top:6px">Bastos lab</div><div class="chips">${P.filter(p=>p.lab==="Bastos").map(p=>personChip(p.id)).join('')}</div>
+  <div class="eyebrow">Chao lab</div><div class="chips">${P.filter(p=>p.lab==="Chao").map(p=>personChip(p.id)).join('')}</div>`;
+}
+function showPerson(id){
+  const p=byId[id]; const other = P.filter(q=>q.lab!==p.lab), same=P.filter(q=>q.lab===p.lab && q.id!==id);
+  const rank = arr=>arr.map(q=>[q,sim(id,q.id)]).sort((a,b)=>b[1]-a[1]).slice(0,4);
+  const rows = arr=>rank(arr).map(([q,s])=>`<button class="chip" data-sel="${q.id}" style="justify-self:start"><i class="dot ${q.lab==="Bastos"?"b":"c"}"></i>${esc(q.name)}</button><div class="bar"><i style="width:${Math.round(s*100/0.6)}%"></i></div><span class="num">${s.toFixed(2)}</span>`).join('');
+  const tagsBy = GROUPS.map(g=>{const ts=p.tags.filter(t=>byId[t].group===g); return ts.length?`<div class="eyebrow">${g}</div><div class="chips">${ts.map(chipFor).join('')}</div>`:''}).join('');
+  const uniq = p.tags.filter(t=>byId[t].owner===p.lab).length;
+  insp.innerHTML = `<div><span class="pill"><i class="dot ${p.lab==="Bastos"?"b":"c"}" style="margin:0"></i>${p.lab} lab</span></div>
+  <h3 style="font-size:22px">${esc(p.name)}</h3><div class="role">${esc(p.role)}</div>
+  <p style="font-size:15px">${esc(p.summary)}</p>
+  <div class="small"><span class="num">${p.tags.length}</span> concepts · <span class="num">${uniq}</span> unique to the ${p.lab} lab</div>
+  <div class="eyebrow">Closest in the other lab</div><div class="kv">${rows(other)}</div>
+  ${same.length?`<div class="eyebrow">Closest in own lab</div><div class="kv">${rows(same)}</div>`:''}
+  ${tagsBy}`;
+}
+function showConcept(id){
+  const c=byId[id]; const b=c.who.filter(w=>byId[w].lab==="Bastos"), z=c.who.filter(w=>byId[w].lab==="Chao");
+  const ownTxt = c.owner==="shared"?"Shared by both labs":`Only the ${c.owner} lab`;
+  insp.innerHTML = `<div><span class="pill"><i class="dot ${ownerKey(c.owner)}" style="margin:0"></i>${ownTxt}</span></div>
+  <h3 style="font-size:22px">${esc(c.label)}</h3><div class="role">${c.group}</div>
+  <div class="small">Bastos lab <span class="num">${b.length}/${nB}</span> · Chao lab <span class="num">${z.length}/${nC}</span></div>
+  ${b.length?`<div class="eyebrow">Bastos lab</div><div class="chips">${b.map(personChip).join('')}</div>`:''}
+  ${z.length?`<div class="eyebrow">Chao lab</div><div class="chips">${z.map(personChip).join('')}</div>`:''}`;
+}
+function showIdea(i){
+  const d=IDEAS[i];
+  insp.innerHTML = `<div class="eyebrow">Collaboration idea</div><h3 style="font-size:20px">${esc(d.t)}</h3>
+  <p style="font-size:15px">${esc(d.why)}</p><p class="small"><b style="color:var(--ink)">First step.</b> ${esc(d.step)}</p>
+  <div class="eyebrow">People</div><div class="chips">${d.who.map(personChip).join('')}</div>
+  <div class="eyebrow">Concepts</div><div class="chips">${d.c.map(chipFor).join('')}</div>`;
+}
+document.addEventListener('click',e=>{const t=e.target.closest('[data-sel]'); if(t){select(t.dataset.sel,true); if(!t.closest('.inspector')) document.getElementById('graph-box').scrollIntoView({behavior:'smooth',block:'center'});}});
+
+/* ---------- graph ---------- */
+let fitted=false, mode="concept", groupFilter="all", selected=null, hl=new Set(), Graph=null, allLabels=false;
+const box=document.getElementById('graph-box'), gEl=document.getElementById('graph'), lblEl=document.getElementById('labels');
+function buildData(){
+  if(mode==="concept"){
+    const cs=C.filter(c=>groupFilter==="all"||c.group===groupFilter);
+    const nodes=[...P.map(p=>({id:p.id,kind:"person",lab:p.lab})), ...cs.map(c=>({id:c.id,kind:"concept",owner:c.owner}))];
+    const ok=new Set(cs.map(c=>c.id));
+    const links=P.flatMap(p=>p.tags.filter(t=>ok.has(t)).map(t=>({source:p.id,target:t})));
+    return {nodes,links};
+  } else {
+    const nodes=P.map(p=>({id:p.id,kind:"person",lab:p.lab}));
+    const links=[]; for(let i=0;i<P.length;i++)for(let j=i+1;j<P.length;j++){links.push({source:P[i].id,target:P[j].id,d:D[i][j]});}
+    return {nodes,links};
+  }
+}
+function neighbors(id){
+  const s=new Set([id]); if(!id) return s;
+  if(id.startsWith('idea:')){const d=IDEAS[+id.slice(5)]; d.who.forEach(x=>s.add(x)); d.c.forEach(x=>s.add(x)); return s;}
+  const n=byId[id];
+  if(mode==="concept"){ if(n.kind==="person") n.tags.forEach(t=>s.add(t)); else n.who.forEach(w=>s.add(w)); }
+  else if(n.kind==="person"){ P.filter(q=>q.id!==id).map(q=>[q.id,sim(id,q.id)]).sort((a,b)=>b[1]-a[1]).slice(0,4).forEach(([q])=>s.add(q)); }
+  else n.who.forEach(w=>s.add(w));
+  return s;
+}
+function nodeColor(n){
+  const base = n.kind==="person"?COL[n.lab]:(n.owner==="shared"?COL.shared:COL[n.owner]);
+  return (selected && !hl.has(n.id)) ? COL.dim : base;
+}
+function linkEnds(l){return [typeof l.source==="object"?l.source.id:l.source, typeof l.target==="object"?l.target.id:l.target];}
+function linkColor(l){
+  const [a,b]=linkEnds(l);
+  if(mode==="dist"){ const s=1-l.d; if(selected && (a===selected||b===selected)) return COL.muted; return s>=0.25?COL.muted:COL.line; }
+  if(selected && hl.has(a) && hl.has(b) && (a===selected||b===selected||selected.startsWith('idea:'))) return COL.muted;
+  return COL.line;
+}
+function linkWidth(l){
+  const [a,b]=linkEnds(l);
+  if(mode==="dist"){ const s=1-l.d; const on=selected&&(a===selected||b===selected); return on? 0.4+s*5 : (s>=0.25? s*3 : 0); }
+  return (selected && (a===selected||b===selected)) ? 1.2 : 0.3;
+}
+function makeLabels(){
+  lblEl.innerHTML=''; const data=Graph.graphData();
+  data.nodes.forEach(n=>{ const d=document.createElement('div'); d.className='lbl '+n.kind; d.textContent = n.kind==="person"?byId[n.id].name.split(' ').slice(0,-1).join(' ')+' '+byId[n.id].name.split(' ').slice(-1)[0][0]+'.':byId[n.id].label; d.dataset.id=n.id; n.__lbl=d; lblEl.appendChild(d); });
+}
+function refreshLabels(){
+  const data=Graph.graphData();
+  data.nodes.forEach(n=>{ const d=n.__lbl; if(!d) return;
+    const show = n.kind==="person" || allLabels || (selected && hl.has(n.id));
+    d.hidden=!show; d.classList.toggle('faded', !!selected && !hl.has(n.id)); });
+}
+function tick(){
+  if(Graph){ const w=box.clientWidth,h=box.clientHeight;
+    Graph.graphData().nodes.forEach(n=>{ const d=n.__lbl; if(!d||d.hidden||n.x===undefined) return;
+      const p=Graph.graph2ScreenCoords(n.x,n.y,n.z);
+      if(p.x<-50||p.y<-20||p.x>w+50||p.y>h+20){d.style.visibility='hidden';return;}
+      d.style.visibility='visible'; d.style.transform=`translate(${(p.x+ (n.kind==="person"?9:6)).toFixed(1)}px,${(p.y-8).toFixed(1)}px)`; });
+  }
+  requestAnimationFrame(tick);
+}
+function restyle(){ if(!Graph) return; Graph.nodeColor(nodeColor).linkColor(linkColor).linkWidth(linkWidth); refreshLabels(); }
+function select(id,fly){
+  selected=id; hl=neighbors(id);
+  if(!id) showDefault(); else if(id.startsWith('idea:')) showIdea(+id.slice(5)); else if(byId[id].kind==="person") showPerson(id); else showConcept(id);
+  restyle();
+  if(fly && Graph && id && !id.startsWith('idea:')){ const n=Graph.graphData().nodes.find(n=>n.id===id); if(n&&n.x!==undefined){ const r=1+160/Math.hypot(n.x||1,n.y||1,n.z||1); Graph.cameraPosition({x:n.x*r,y:n.y*r,z:n.z*r},n,900);} }
+}
+function setMode(m){
+  mode=m; document.getElementById('m-concept').setAttribute('aria-pressed',m==="concept"); document.getElementById('m-dist').setAttribute('aria-pressed',m==="dist");
+  document.getElementById('f-group').disabled = m==="dist"; document.getElementById('c-labels').disabled = m==="dist";
+  if(selected && !selected.startsWith('idea:') && byId[selected].kind==="concept" && m==="dist") selected=null;
+  Graph.graphData(buildData());
+  if(m==="dist"){ Graph.d3Force('link').distance(l=>20+320*l.d).strength(l=>0.25+ (1-l.d)*0.9); Graph.d3Force('charge').strength(-30); }
+  else { Graph.d3Force('link').distance(l=>byId[linkEnds(l)[1]].owner==="shared"?45:60).strength(0.35); Graph.d3Force('charge').strength(-55); }
+  Graph.d3ReheatSimulation && Graph.d3ReheatSimulation();
+  makeLabels(); select(selected,false);
+  fitted=false;
+}
+function initGraph(){
+  let ok=false; try{ const c=document.createElement('canvas'); ok=!!(c.getContext('webgl2')||c.getContext('webgl')); }catch(e){}
+  if(!ok || typeof ForceGraph3D!=="function"){ document.getElementById('fallback').style.display='flex'; return; }
+  Graph = ForceGraph3D({controlType:'orbit'})(gEl)
+    .width(box.clientWidth).height(box.clientHeight)
+    .backgroundColor(COL.bg).showNavInfo(false)
+    .nodeId('id').nodeRelSize(4).nodeOpacity(0.95).nodeResolution(16)
+    .nodeVal(n=>n.kind==="person"?(byId[n.id].role.startsWith('PI')?9:5):Math.max(0.6,byId[n.id].who.length*0.35))
+    .nodeLabel(n=>{const b=byId[n.id]; return n.kind==="person"?`<b>${esc(b.name)}</b><br>${esc(b.role)}`:`<b>${esc(b.label)}</b><br>${b.who.length} people`;})
+    .linkOpacity(0.55).cooldownTime(4000)
+    .onEngineStop(()=>{ if(!fitted){ fitted=true; Graph.zoomToFit(700,30); } })
+    .onNodeClick(n=>select(n.id,true))
+    .onBackgroundClick(()=>select(null,false));
+  Graph.cameraPosition({z:420});
+  setMode("concept");
+  new ResizeObserver(()=>Graph.width(box.clientWidth).height(box.clientHeight)).observe(box);
+  requestAnimationFrame(tick);
+}
+document.getElementById('m-concept').onclick=()=>setMode("concept");
+document.getElementById('m-dist').onclick=()=>setMode("dist");
+document.getElementById('f-group').onchange=e=>{groupFilter=e.target.value; setMode("concept");};
+document.getElementById('c-labels').onchange=e=>{allLabels=e.target.checked; refreshLabels();};
+document.getElementById('c-spin').onchange=e=>{const c=Graph&&Graph.controls(); if(c){c.autoRotate=e.target.checked; c.autoRotateSpeed=0.8;}};
+document.getElementById('b-reset').onclick=()=>{select(null,false); Graph&&Graph.zoomToFit(700,40);};
+function onTheme(){ readColors(); if(Graph){Graph.backgroundColor(COL.bg); restyle();} drawMatrix(); }
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',onTheme);
+new MutationObserver(onTheme).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+
+/* ---------- concept map ---------- */
+(function(){
+  const col=(o,title,cls)=>{
+    const cs=C.filter(c=>c.owner===o);
+    const body=GROUPS.map(g=>{const xs=cs.filter(c=>c.group===g).sort((a,b)=>b.who.length-a.who.length); if(!xs.length) return '';
+      return `<div class="grp"><div class="eyebrow">${g}</div><div class="chips">${xs.map(c=>{const b=c.who.filter(w=>byId[w].lab==="Bastos").length, z=c.who.length-b;
+        const cnt = o==="shared"?`<span class="ccount">${b}/${nB} · ${z}/${nC}</span>`:`<span class="ccount">${o==="Bastos"?b+'/'+nB:z+'/'+nC}</span>`;
+        return `<button class="chip" data-sel="${c.id}">${esc(c.label)} ${cnt}</button>`}).join('')}</div></div>`}).join('');
+    return `<div class="col ${cls}"><div class="col-head"><h3>${title}</h3><span class="ccount">${cs.length} concepts</span></div>${body}</div>`;
+  };
+  document.getElementById('cmap').innerHTML = col("Bastos","Bastos lab only","b")+col("shared","Shared","s")+col("Chao","Chao lab only","c");
+})();
+
+/* ---------- matrix ---------- */
+const ramp=["#cde2fb","#b7d3f6","#9ec5f4","#86b6ef","#6da7ec","#5598e7","#3987e5","#2a78d6","#256abf","#1c5cab","#184f95","#104281","#0d366b"];
+function rampCol(s){ const i=Math.min(ramp.length-1,Math.floor(s/0.55*(ramp.length-1)+0.0001)); return ramp[i]; }
+const order=(()=>{const B=P.filter(p=>p.lab==="Bastos"); const Z=P.filter(p=>p.lab==="Chao").map(p=>[p,Math.max(...B.map(b=>sim(b.id,p.id)))]).sort((a,b)=>b[1]-a[1]).map(x=>x[0]); return [...B,...Z];})();
+const tip=document.getElementById('tip');
+function drawMatrix(){
+  const n=order.length, cell=30, left=150, top=150, W=left+n*cell+8, H=top+n*cell+40;
+  let s=`<svg viewBox="0 0 ${W} ${H}" width="${W}" style="max-width:none;display:block" role="img" aria-label="Pairwise similarity matrix">`;
+  order.forEach((p,i)=>{
+    const c=p.lab==="Bastos"?COL.Bastos:COL.Chao;
+    s+=`<circle cx="${left-10}" cy="${top+i*cell+cell/2}" r="4" fill="${c}"/><text x="${left-20}" y="${top+i*cell+cell/2+4}" text-anchor="end" font-size="12" data-sel="${p.id}" style="cursor:pointer">${esc(p.name)}</text>`;
+    s+=`<g transform="translate(${left+i*cell+cell/2},${top-10}) rotate(-55)"><text x="12" y="4" font-size="12" data-sel="${p.id}" style="cursor:pointer">${esc(p.name)}</text><circle cx="0" cy="0" r="4" fill="${c}"/></g>`;
+  });
+  order.forEach((a,i)=>order.forEach((b,j)=>{
+    const v=i===j?null:sim(a.id,b.id);
+    s+=`<rect x="${left+j*cell+1}" y="${top+i*cell+1}" width="${cell-2}" height="${cell-2}" rx="3" fill="${v===null?COL.line:rampCol(v)}" data-a="${a.id}" data-b="${b.id}"/>`;
+  }));
+  const nb=P.filter(p=>p.lab==="Bastos").length;
+  s+=`<line x1="${left}" x2="${left+n*cell}" y1="${top+nb*cell}" y2="${top+nb*cell}" stroke="${COL.muted}" stroke-width="1.5"/><line y1="${top}" y2="${top+n*cell}" x1="${left+nb*cell}" x2="${left+nb*cell}" stroke="${COL.muted}" stroke-width="1.5"/>`;
+  const ly=top+n*cell+16; const lw=180;
+  ramp.forEach((c,i)=>{s+=`<rect x="${left+i*lw/ramp.length}" y="${ly}" width="${lw/ramp.length+0.5}" height="10" fill="${c}"/>`});
+  s+=`<text class="muted" x="${left}" y="${ly+24}" font-size="11">0</text><text class="muted" x="${left+lw}" y="${ly+24}" font-size="11" text-anchor="end">≥0.55</text><text class="muted" x="${left+lw+10}" y="${ly+9}" font-size="11">Jaccard similarity</text>`;
+  s+='</svg>';
+  const m=document.getElementById('matrix'); m.innerHTML=s;
+  m.querySelectorAll('rect[data-a]').forEach(r=>{
+    r.addEventListener('mousemove',e=>{const a=byId[r.dataset.a],b=byId[r.dataset.b]; if(a.id===b.id){tip.hidden=true;return;}
+      const sh=a.tags.filter(t=>b.tags.includes(t)).map(t=>byId[t].label);
+      tip.innerHTML=`<b>${esc(a.name)} × ${esc(b.name)}</b><br>Similarity <span class="num">${sim(a.id,b.id).toFixed(2)}</span> · ${sh.length} shared<br><span style="color:var(--muted)">${esc(sh.slice(0,8).join(', '))}${sh.length>8?' …':''}</span>`;
+      tip.hidden=false; tip.style.left=Math.min(e.clientX+14,innerWidth-300)+'px'; tip.style.top=(e.clientY+14)+'px';});
+    r.addEventListener('mouseleave',()=>tip.hidden=true);
+    r.style.cursor='pointer'; r.addEventListener('click',()=>{ if(r.dataset.a!==r.dataset.b) select(r.dataset.a,true); });
+  });
+}
+drawMatrix();
+
+/* ---------- nearest partner table ---------- */
+(function(){
+  let h='<thead><tr><th>Person</th><th>Closest in other lab</th><th class="r">Sim.</th><th>Shared</th></tr></thead><tbody>';
+  order.forEach(p=>{ const o=P.filter(q=>q.lab!==p.lab).map(q=>[q,sim(p.id,q.id)]).sort((a,b)=>b[1]-a[1])[0];
+    const sh=p.tags.filter(t=>o[0].tags.includes(t)).length;
+    h+=`<tr><td>${personChip(p.id)}</td><td>${personChip(o[0].id)}</td><td class="r num">${o[1].toFixed(2)}</td><td class="num">${sh}</td></tr>`; });
+  document.getElementById('nn').innerHTML=h+'</tbody>';
+})();
+
+/* ---------- ideas ---------- */
+document.getElementById('ideas').innerHTML = IDEAS.map((d,i)=>`<article class="idea">
+  <div class="fit ${d.fit}">${d.fit==="hi"?"Strong overlap · start here":"Complementary · build toward"}</div>
+  <h3>${esc(d.t)}</h3><p>${esc(d.why)}</p><p class="step"><b>First step.</b> ${esc(d.step)}</p>
+  <div class="chips">${d.who.map(personChip).join('')}</div>
+  <div><button class="btn" data-sel="idea:${i}">Highlight in graph</button></div></article>`).join('');
+
+/* ---------- questions ---------- */
+const QDATA = {"q3": {"title": "With no body, does the brain still cancel the sensory consequences of its own actions, and does the forward model predict the intended limb movement or the arbitrary decoder-to-ICMS contingency, shown by a rewritten mapping and by whether S1 suppression and felt attenuation change together?", "only": "Bastos alone: NHP BCI with ICMS exists, but monkeys keep intact afferents and spinal gating, and cannot report intensity or who caused a touch. Chao alone: human EEG attenuation studies have intact bodies and no S1/M1 units, and the SCI monkey work had no ICMS channel. Force-matching studies give perception without neurons, and animal studies give neurons without perception. Only a largely deafferented BCI user with M1 decoding and S1 ICMS can make self-caused touch that is physically identical to external touch, rewrite the mapping in minutes, and report the result.", "design": "Blocks within each session (about 6 sessions; the remap rule is held for 3 sessions so it can consolidate). SELF: a decoded attempted index flexion triggers D2 ICMS 100 ms after the decoder crosses threshold. EXTERNAL: the same trains replayed, yoked to the SELF timestamps, while the participant does not attempt any movement. REMAP: the new rule is told verbally (attempted thumb abduction or wrist extension triggers D2; index triggers nothing, or triggers D4). CONTROL: random finger or random timing. Omission probes on 15% of decoded actions. Perceptual readout: a two-interval intensity comparison (self vs external train, amplitude set by a staircase) to fit a point of subjective equality, plus 0-10 intensity and 'did you cause it?' ratings. Neural readout: S1 units and high gamma on non-stimulated channels after blanking and template subtraction; M1->S1 beta Granger and coherence before the ICMS; decoding of the expected finger from S1 before the ICMS; omission error responses with no artifact. Remapping is introduced mid-session to follow trial-by-trial updating.", "bastos": "The predictive-routing prediction that a self-generated prediction shows up as an alpha/beta increase in S1 and in M1->S1 coherence before the ICMS, with less gamma and spiking afterwards. Omissions should produce an error response only once the contingency has been learned. Granger/DCM between the two arrays. Inference of inhibitory cell types (putative PV vs SST from waveforms and spectral signatures). A JAX model of a deafferented S1 column that receives efference input.", "chao": "Motor ECoG/BMI decoding expertise to build, stabilise and rewrite the trigger decoder. Sensorimotor-adaptation paradigms and learning-rate models for the remap. The SCI motor-network reorganisation framework (Cereb Cortex 2019). Frequency ordering to separate prediction from error. What vs when separation (finger vs timing). Reservoir models of how fast a new contingency can be learned.", "outcomes": "(1) Attenuation follows the contingency: after remapping, thumb-triggered D2 ICMS feels weaker and evokes less S1 spiking than yoked external ICMS, M1->S1 beta rises beforehand, omissions produce errors, and neural and perceptual attenuation correlate trial by trial. Then forward models predict learned action-outcome contingencies, the 'self' is defined by contingency, and cortical suppression is what is felt. (2) Attenuation only for the anatomically congruent mapping, even after 3 sessions: efference copies are tied to a body schema that survives years of deafferentation. (3) No attenuation at all: cancellation needs an intact reafferent loop to be maintained, so deafferentation removes the self/other distinction in touch, a direct constraint on bidirectional BCI design. (4) The percept is attenuated but S1 spiking is not: attenuation is applied downstream of area 1.", "v": {"novelty": {"score": 8, "ok": true, "reason": "No study found has compared self-triggered (BCI-decoded) ICMS with yoked external ICMS, or remapped the contingency. Sensory attenuation work uses intact bodies. The closest human work is Shelchkova 2025, which found expectation signals in M1 while S1 'remains unperturbed', and Serino 2022, which studied agency with an M1 BMI but no ICMS attenuation. Both leave the question open, and the Shelchkova finding gives a non-trivial prior that attenuation may not show up in S1. Rewriting the action-outcome rule verbally is possible only on this platform."}, "necessity": {"score": 7.5, "ok": true, "reason": "Separating what the forward model predicts (body mechanics or an arbitrary learned contingency) needs a self-caused touch that is physically identical to an external one, a mapping that can be rewritten verbally within minutes, and felt-attenuation reports tied to S1 units. Monkey BCI with ICMS exists, and monkeys can make two-interval intensity comparisons. But afferents and spinal gating are intact, the remap must be trained over weeks, and there is no 'did you cause it' report. Human EEG attenuation studies lack units and an artificial channel. Chao's BMI and adaptation work and Bastos's routing and Granger work are both used. It overlaps with q8, so frame the two as complementary."}, "feasibility": {"score": 8, "ok": true, "reason": "This is the strongest and most feasible design. The UChicago group already pairs decoder-triggered ICMS with BCI. Yoked replay, mapping rewrites by verbal instruction, two-interval ICMS intensity judgements (amplitude JNDs are measurable) and artifact-free omission probes all fit standard sessions. Holding the remap across 3 sessions needs coordination with the clinical team but is realistic. Two risks: the attenuation effect may be small at n=2-4, and S1-evoked responses must come from non-stimulated channels after blanking. The EXTERNAL condition also differs in M1 state (no attempted movement), which is part of the contrast but should be acknowledged."}}}, "q2": {"title": "When an expected artificial touch never arrives in a person with no natural hand input, do they ever feel it, and is that phantom experience carried by content-specific omission spiking in S1, by pre-omission alpha/beta prediction, or by M1 motor intention?", "only": "Bastos alone: NHP omission spiking can be recorded, but a monkey cannot say it felt something, and training a 'felt touch' report is confounded by reward expectation. Chao alone: EEG/ECoG omission responses come without units, from people with intact skin, so a phantom cannot be separated from real peripheral input. Rodents and cultures give no report. Only this platform combines units in largely deafferented S1 and M1, an artificial input that can be removed completely, self-generated contact through the BCI, and trial-by-trial report.", "design": "Two contexts, run within the same sessions. (a) Passive rhythmic: ICMS trains at 2-3 Hz evoke percepts on D2. On 10-15% of sequences the 4th train is omitted. Conditions are rhythmic ('when' predictable), jittered, and finger-switch (4th train on D4, a 'what' violation). (b) Self-generated: the participant grasps virtual or robotic objects with the M1 decoder, and contact triggers index ICMS at a fixed delay. After learning, 15% of contacts are omissions and 10% are finger swaps. Passive observation of the robot provides an externally triggered control. After each trial the participant reports, verbally or with a decoded click, whether they felt a touch, on which finger, and with what confidence (1-4). About 300 omissions per session over 3-4 sessions. Analyses: omission spiking and gamma compared between felt and not-felt trials; pre-omission alpha/beta power and phase, and M1->S1 Granger/beta coherence, as predictors of the report; transfer of a D2-vs-D4 decoder from real ICMS to omission-period activity; and the self vs passive contrast. A follow-up session uses closed-loop timing to place omissions at chosen alpha phases.", "bastos": "Omission paradigms (macaque and OpenScope Neuropixels) and the predictive-routing readout (pre-omission alpha/beta as the prediction, omission gamma/spiking as the error). Granger/DCM analysis between S1 and M1. Propofol experience on which signals track conscious access. A JAX model that predicts whether omission activity should look like a weak copy of the stimulus response or an error signal of opposite sign.", "chao": "The what/when temporal-prediction framework (Huang & Chao 2025 PLOS Biol) and the reservoir model of joint what/when encoding (Yamada & Chao 2026). Omission neurons (Yaron et al. 2025). Frequency-ordering analysis. Closed-loop phase targeting. BMI paradigm design for the self-generated contact condition.", "outcomes": "(1) Phantom touches occur, and on those trials omission spiking decodes as the expected finger (decoder transfer). Then S1 predictions are sensory templates that are sufficient for experience: direct human evidence for perception driven by prediction. (2) Phantom reports go with stronger pre-omission alpha/beta feedback and little spiking: the experience comes from the low-frequency prediction signal itself, as predictive routing proposes. (3) Robust omission spiking with no phantom reports, or no felt vs not-felt difference: cellular prediction errors are unconscious bookkeeping and report depends on a later readout. (4) Phantoms appear only for self-generated BCI contact: the prediction that fills in experience comes from M1 intention (efference copy).", "v": {"novelty": {"score": 8, "ok": true, "reason": "I found no human work asking whether an omitted expected ICMS train is ever felt, or whether omission activity decodes as the expected finger. Earlier ICMS detection studies report zero false positives on catch trials and no trial-history effect, but they interleaved electrodes pseudorandomly so that no expectation could form. That makes the phantom question open and the base rate known to be near zero, which is a strong baseline. The question needs report, an input channel that can be fully removed, and units in deafferented S1. The decoder-transfer test of whether omission activity is a template of the expected finger is new."}, "necessity": {"score": 8, "ok": true, "reason": "Whether an omitted expected touch is ever felt as that touch, and which signal carries the experience, needs four things together: a touch channel that can be removed completely (deafferented S1 with ICMS only), per-trial verbal report with finger and confidence, single units for decoder transfer from real ICMS to omission activity, and self-generated contact through the BCI. Monkeys can report false alarms (Romo-style tasks), but their skin and afferents are intact, so a phantom cannot be told apart from peripheral noise. Epilepsy microwire patients rarely have hand-area S1 units and have intact skin. Both labs contribute real expertise: Bastos on omission and predictive routing, Chao on what/when timing and omission neurons. Risk: phantom reports may be rare, so the felt vs not-felt contrast may have too few trials."}, "feasibility": {"score": 7, "ok": true, "reason": "This is a new question that only this platform can ask: the omission epochs are artifact-free, the only touch channel is ICMS, there are units, and the participant reports on every trial. The numbers do not work, though. About 300 omissions per session at a 10-15% rate means 2,000-3,000 sequences with a trial-level report, which does not fit one session. Phantom reports may also be rare, which would leave very few 'felt' trials. Participants with SCI often have spontaneous phantom sensations, so a false-alarm baseline is needed. Decoder transfer from real ICMS to omission activity has to use non-stimulated channels, because responses at stimulated sites are dominated by direct activation. The self-generated arm needs time on the clinical decoder."}}}, "q5": {"title": "Can a one-sentence verbal instruction create a finger-specific prior in deafferented S1 single neurons, does that prior work by pre-activating the expected ensemble (sharpening) or by beta-inhibiting the unexpected ones (routing), and do instructed and experience-learned priors use the same code and produce the same percepts, including hallucinated touches?", "only": "Bastos alone: animals cannot be instructed, so instructed and experienced priors cannot be separated, and monkeys cannot report a two-finger ambiguous percept or a hallucinated touch. Chao alone: EEG/fMRI/ECoG can instruct but cannot resolve finger-specific ensembles in area 1, cannot deliver ambiguity set to an exact level, and the intact skin contaminates hallucination measures. Only this platform combines instruction, finger maps of S1 units, controllable ambiguous and near-threshold ICMS, and report.", "design": "Map each electrode's projected field. Build an A/B two-electrode blend titrated to a 50/50 finger percept, and calibrate a near-threshold train to about 50% detection. Instructed-prior sessions: a cue (tone or visual) is followed by the sentence 'high tone means index 80%'. In block 1 the true contingency is 50/50 (pure belief); in block 2 it really is 80/20. Experienced-prior sessions use a new cue pair, no instruction, and an 80/20 contingency learned across trials. An imagery-control block asks the participant to imagine touch on A or B. Each trial ends with a report of detection, finger and confidence; catch trials contain no ICMS. Analyses: decoding of the cued finger from pre-stimulus spiking vs beta across the array; whether beta rises on non-cued-finger electrodes (routing) or spiking rises on cued electrodes (sharpening); psychometric shift and false-alarm finger specificity; whether catch-trial 'hallucination' population patterns match real-ICMS patterns; the same analyses on M1 to test whether the prior acts after S1. 3-5 sessions.", "bastos": "Explicit competing predictions: predictive routing (spatially specific beta inhibition of unpredicted channels) vs sharpening. Spike-field and cross-condition decoding pipelines. A JAX biophysical model in which prior strength sets pre-stimulus patterns and the false-alarm rate.", "chao": "What-prediction and crossmodal paradigms (a sound or image cue predicting touch), decoding of prediction content before input, Bayesian or spiking model fits of perceptual bias, and the ASD/individual-differences perspective on how strongly priors are weighted.", "outcomes": "(1) Cued-finger spiking rises before the stimulus and predicts the bias and the false alarms: sharpening by template. (2) No pre-stimulus change in spiking, but beta rises on non-cued channels and predicts the bias: routing by inhibition. (3) Both, separated in time (beta early, spiking just before onset). (4) Instructed priors shift reports and confidence but not S1, while experienced priors shift both. Then there are two routes to expectation, decisional and sensory, which matters for theories of placebo and psychosis. (5) Neither prior type produces hallucination-like S1 activity even when false alarms occur: conditioned hallucinations are generated downstream of S1. Comparing imagery and expectation separates generative imagery from predictive inhibition.", "v": {"novelty": {"score": 8, "ok": true, "reason": "I found no study that compares instructed priors with priors learned from experience in human S1 single units, with ambiguous two-electrode ICMS and hallucination catch trials. Earlier ICMS work found no false positives and no trial-history effects under conditions with no expectation, which makes conditioned false alarms a clean test. Separating sharpening from routing in cortex that receives no input, with a prior installed by words in seconds, is fundamentally new. It needs instruction and report (human), unit-level finger maps (array), and both labs' competing models."}, "necessity": {"score": 8.5, "ok": true, "reason": "A prior installed by one sentence, with no training history, in cortex that gets no natural input separates top-down expectation from plasticity, and only humans can supply it. Ambiguous two-electrode ICMS set to 50/50 and near-threshold catch trials with finger-specific false-alarm reports need ICMS with report. Finger-resolved area 1 units are needed to adjudicate sharpening vs routing. Monkeys cannot be instructed. Chao's EEG/ECoG cannot resolve finger ensembles. Epilepsy microwires lack hand S1 and have intact skin. Both labs are essential: Bastos supplies the competing routing vs sharpening predictions and models, Chao the what-prediction, crossmodal cueing and Bayesian fits."}, "feasibility": {"score": 6, "ok": true, "reason": "The instructed-vs-experienced prior contrast on S1 units is new and fits the time available, because instruction takes seconds. The main problem is that co-stimulating two electrodes usually gives a combined percept covering both projected fields, not a bistable 50/50 finger percept. The ambiguous stimulus at the centre of the design may therefore not exist. The design also has many arms (instructed with true and false contingency, experienced, imagery, catch trials) for 3-5 sessions, and catch-trial false alarms may be too rare to analyse."}}}, "q8": {"title": "In deafferented S1, does attempting to grasp an object generate a content-specific predicted touch (which finger, when) that can be decoded before contact, and does that prediction cancel a matching ICMS percept or pull ICMS percepts toward the predicted finger?", "only": "Bastos alone: during grasp in intact NHPs, S1 activity is dominated by real reafference, so there is no prediction-only signal, and monkeys cannot report a mislocalised percept. Chao alone: ECoG and non-invasive methods cannot resolve finger-specific area 1 codes or deliver a focal finger-specific probe. Mice have no hands and give no report. Only deafferented humans with area 1 arrays, ICMS and report have prediction without input plus a controllable probe with a subjective readout.", "design": "The participant attempts to grasp virtual objects whose shape implies contact on particular fingers (a pinch implies thumb and index). Step 1: train a decoder on S1 activity during attempts without ICMS, and test whether the predicted contact finger is decodable before the expected contact time. Step 2: at the expected time (or at an unexpected time), deliver ICMS on the congruent, an adjacent or a distant finger's electrode, at near- and supra-threshold amplitudes. The participant reports detection, finger (on a hand map) and intensity. Control: identical ICMS during passive viewing of the object without an attempt. About 400 trials over 3-4 sessions.", "bastos": "Competing predictions from predictive routing (congruent ICMS evokes less spiking and gamma and feels weaker, with pre-contact alpha/beta carrying the prediction). Laminar-proxy spectral motif analysis on the Utah LFP. A biophysical model of how SST vs PV inhibition produces cancellation vs sharpening.", "chao": "What vs when prediction designs, the frequency-ordering split between prediction and error, representational analysis of predicted content, and ECoG-BMI decoding methods turned into a moment-by-moment readout of the predicted finger.", "outcomes": "(1) Cancellation: congruent ICMS feels weaker and evokes less spiking, while incongruent ICMS evokes more gamma. This supports predictive routing even without bottom-up input. (2) Sharpening/bias: congruent near-threshold ICMS is detected more often and adjacent-finger percepts are mislocalised toward the predicted finger. Then feedback carries content, not just inhibition. (3) No finger-specific prediction in S1: motor predictions do not reach area 1 after deafferentation, which argues for routing BCI feedback via M1.", "v": {"novelty": {"score": 7, "ok": true, "reason": "I found no study testing whether attempted grasp produces a finger-specific predicted touch that can be decoded from deafferented S1, or whether that prediction cancels matching ICMS or pulls percepts toward the predicted finger. Shelchkova 2025 found digit-specific expectation in M1 with S1 unperturbed, which makes this a high-risk but informative test. The reportable mislocalisation measure is new. It overlaps a lot with q3, which also asks about motor-generated cancellation of ICMS."}, "necessity": {"score": 8, "ok": true, "reason": "A motor-generated touch prediction with no input at all, decoded from area 1 and then probed with focal finger-specific ICMS while the person reports where the touch is felt, needs a deafferented hand-area S1, ICMS, and report. In intact monkeys, reafference dominates S1 during grasp. Deafferented monkeys are rare and cannot report mislocalisation. ECoG cannot resolve finger codes. The question directly tests cancellation vs sharpening, which matters to both labs' theories. It overlaps with q3 (attenuation) and should be framed as the content/location companion."}, "feasibility": {"score": 6, "ok": true, "reason": "This is feasible: S1 is known to respond during attempted movement in tetraplegic participants, and probe ICMS with a hand-map report is routine. There is a major confound: decoding 'predicted contact finger' before contact cannot be separated from motor-related S1 activity for the attempted finger movement itself. It also overlaps substantially with q3."}}}, "q10": {"title": "When someone learns a new, rule-defined body (a hidden decoder mapping), is discovering the rule an abrupt insight event in M1 population geometry and beta signalling, and does incubation (rest, sleep or a break) reorganise the neural state space before the reported 'aha'?", "only": "Bastos alone: NHP manifold-perturbation BCI studies give no insight report, cannot instruct incubation or a rule, and need weeks of training. Chao alone: EEG insight studies cannot see M1 population geometry, and visuomotor rotations in intact people are confounded by proprioception and lifelong body priors. Rodents give no report. Only implanted humans allow an arbitrary new body, instructed incubation, insight reports, and recording of the generating population across days.", "design": "A cursor decoder switches between the standard mapping and a within- or outside-manifold permutation according to a hidden rule (signalled by which finger gets a brief ICMS context pulse, or by target hemifield). The participant is told only 'there is a hidden rule; tell us when you figure it out'. Spontaneous 'aha' reports (spoken or decoded click) are collected, and a structured probe every 25 trials asks the participant to state the rule. Manipulations: a 10-minute incubation break (mental arithmetic) vs continued practice; rest and an overnight gap followed by a Day-2 retest; an explicit-instruction condition to measure how quickly M1 reconfigures from words alone. Analyses: success curves aligned to the report; change-point/HMM analysis of manifold alignment and context-separating dimensions; energy-landscape and 'long-distance exploration' metrics on M1/S1 populations and scalp EEG; beta bursts and S1->M1 coherence around the context cue; reactivation of explored states during rest.", "bastos": "Beta-burst analysis and beta as a stabilising top-down prediction that must be released before restructuring, which predicts beta desynchronisation just before insight. Granger/DCM between S1 (context ICMS) and M1. Biophysical models of beta gating of context-dependent routes.", "chao": "Insight and incubation paradigms and markers (decoding incubation, EEG energy landscape, long-distance exploration), spiking/reservoir models comparing reward-modulated Hebbian learning with latent-context inference, sensorimotor adaptation, and the SCI network-reorganisation framework.", "outcomes": "(1) Performance and M1 context dimensions jump together at the report, preceded by beta suppression and exploration, and incubation raises the chance of insight: rule learning of a body uses the same latent-cause inference as abstract insight. (2) Neural reorganisation comes before the report: subjective insight reads out implicit learning that has already happened. (3) Outside-manifold rules are solved only by insight, within-manifold rules gradually: manifold constraints map onto the two learning systems. (4) Rest reactivation predicts Day-2 sudden solution: a single-neuron mechanism for incubation. (5) Instruction alone reconfigures M1 within a few trials: a measure of how fast knowledge rewrites motor dynamics.", "v": {"novelty": {"score": 7, "ok": true, "reason": "I found no human intracortical BCI study that collects insight reports while learning a hidden rule-defined decoder mapping, or that manipulates incubation. NHP manifold-perturbation studies have no report, and human BCI learning work concerns decoder calibration. The insight and incubation link brings in Chao's expertise and is new. Two weaknesses: it is the least tied to the shared predictive-processing theme, and outside-manifold learning normally takes days, which strains limited session time."}, "necessity": {"score": 7, "ok": true, "reason": "Trial-level 'aha' reports, instructed incubation, and explicit instruction applied to an arbitrary new body with a fully known neural solution space (M1 population recorded across days) cannot be obtained from monkey manifold-perturbation BCI or from EEG insight studies. It brings Chao's insight and incubation programme into motor cortex in a new way. Bastos's role (beta release before restructuring) is weaker but real. Risks: outside-manifold learning may not happen within limited sessions, and overnight consolidation adds burden."}, "feasibility": {"score": 6, "ok": true, "reason": "A hidden-rule decoder with insight reports is feasible and new. However, outside-manifold perturbations take days of learning in monkeys and may frustrate participants or interfere with clinical decoder time. Overnight sleep reactivation cannot be recorded in in-lab-only sessions. Energy-landscape analysis of scalp EEG with pedestals is a secondary aim."}}}, "q11": {"title": "When the experimenter controls both an artificial body (BCI robot hand) and its touch channel (ICMS), do S1/M1 single-neuron crossmodal prediction errors track reported ownership block by block, does agency or touch anchor ownership, and does the relationship change over years of use?", "only": "Bastos alone: no ownership ratings from monkeys, and their real hand is intact and felt. Chao alone: crossmodal PC with EEG/fNIRS and rubber-hand tasks, but no units, competing tactile input from the real hand, and no recording from the same neurons over years. Only deafferented S1 ICMS plus BCI robot control plus multi-year arrays allows this.", "design": "The participant watches the robot hand being stroked on the index finger while D2 ICMS is delivered at visuo-tactile lags of 0, 100, 300 or 600 ms, in blocks of about 30 strokes. After each block: verbal ownership and agency items (1-7) and a BCI-cursor proprioceptive-drift pointing response. Variants: active (the participant moves the robot with the decoder) vs passive; violations (a stroke seen without ICMS, or ICMS on the wrong finger). Measures: unit and gamma responses relative to the expected time, omission and violation responses, S1-M1 alpha/beta, and block-wise correlation with ratings. A 20-minute version is repeated every 2-3 months over the life of the implant.", "bastos": "Omission and violation analysis and the predictive-routing prediction that errors are largest for asynchronous ICMS and shrink as ownership grows. Long-term chronic analysis methods (OpenScope, NHP). Hierarchical DCM of S1-M1 crossmodal interactions.", "chao": "The crossmodal PC framework and what/when timing manipulations, BCI decoding to drive the robot, the SCI reorganisation framework for interpreting multi-year change, and reservoir models of learning a body model.", "outcomes": "(1) Synchronous ICMS gives smaller S1 errors and higher ownership, the error predicts the rating, and the effect grows over years: ownership is the subjective side of crossmodal PE minimisation, and the brain incorporates the artificial limb. (2) Ratings and neural errors dissociate: low-level sensory PE is separate from the computation that produces ownership. (3) Active control dominates ownership regardless of ICMS timing: agency, not touch, anchors the felt body, which has direct implications for BCI design.", "v": {"novelty": {"score": 7, "ok": true, "reason": "I found no study that varies visuo-tactile lag with ICMS on a robot hand, records S1/M1 units, and collects ownership ratings. Flesher 2021 showed that ICMS percepts are felt on the participant's own hand during robot use, and Rosenthal and Andersen (2024) studied how visual context shifts the perceived timing of ICMS; neither tested ownership with neural prediction errors. The multi-year arm is unique to chronic arrays. The main risk is weak measures: proprioceptive drift is hard to measure in people with no hand proprioception."}, "necessity": {"score": 6.5, "ok": true, "reason": "This passes only just. Testing ownership against single-neuron crossmodal prediction error, with no competing real-hand touch and active vs passive control, needs the deafferented ICMS and BCI platform plus ratings. Neither lab can do it alone. Weaknesses: BCI groups (including Pitt and UChicago) have already examined embodiment with ICMS, which reduces novelty. Correlating at block level gives few data points. Multi-year tracking depends on how long the implant lasts."}, "feasibility": {"score": 6, "ok": true, "reason": "This is feasible: a robot hand with ICMS at controlled lags, block ratings and 20-minute repeats every few months all fit. Block-wise ratings give few data points per session, so the correlation with neural errors is weak at n=2-4. Evoked errors overlap the ICMS artifact, which leaves visual-without-ICMS omission trials as the clean readout. BCI-based proprioceptive drift is unvalidated."}}}, "q7": {"title": "How does adult human cortex build priors for an entirely new sensory channel whose whole input history is logged and controlled: do learned ICMS regularities move over months from local spiking suppression to M1->S1 beta-carried prediction, how fast do they form and unlearn, and do fast-spiking interneurons carry the learned precision?", "only": "Bastos alone: NHP chronic ICMS learning competes with intact natural touch, has no multi-year human array continuity, and has no verbal report of what the animal thinks the rule is. Chao alone: CMOS-MEA cultures can learn stimulation statistics but have no hierarchy, percept or report, and human EEG cannot target a new channel or follow units. Only chronically implanted humans with logged ICMS and report, analysed with Bastos's cell-type and rhythm methods and compared with Chao's culture and reservoir baselines, can do this.", "design": "Retrospective: use archived ICMS logs (count, context and predictability per electrode) to test whether pre-ICMS beta and firing ramps in past sessions with predictable ICMS (for example robot-grasp feedback) scale with each electrode's cumulative predictable exposure. Prospective (6-12 months, a 10-15 minute block at the start of routine sessions): (a) a second-order Markov grammar across 4-6 electrodes with occasional violations, and stable vs volatile epochs every few months; (b) two electrodes matched for threshold, one reliably cued by a sound (p=0.9) and one unpredictable, with the contingencies swapped after 6 months. Tests: explicit (state the rule, predict the next location), implicit (RT, neural mismatch), omission and reversal probes every 4 weeks, and a hand-map drawing of percept location, size and quality. Neural metrics: mismatch spiking, pre-stimulus decoding of the next location from S1 and M1, M1->S1 beta Granger, and responses of narrow- vs broad-waveform units as a function of volatility, with units tracked across sessions. The same grammar is given to CMOS-MEA cultures and reservoir models as a baseline with no hierarchy.", "bastos": "The inhibitory cell-type framework (PV/SST roles in prediction), waveform classification, spike-field methods, the predictive-routing prediction that learning shifts the prediction from spikes to beta, DCM of how connectivity changes with learning, and Bayesian/JAX fits of how prior precision accumulates over the logged history.", "chao": "CMOS-MEA cultures and reservoir models as the 'local circuits only' baseline, learning-curve and insight analyses (sudden explicit rule discovery vs gradual implicit learning), what/when separation (cue predicts timing, electrode predicts finger), crossmodal PC, and hierarchical PE modelling.", "outcomes": "(1) Early learning shows only local, culture-like mismatch spiking. Later, pre-stimulus M1->S1 beta predicts the next location and error spiking shrinks. This would be the first developmental evidence for predictive routing, with a measurable time constant (weeks) and slower unlearning. (2) Learning stays local with no inter-areal change: S1 absorbs the regularity by adaptation, as cultures do. (3) Priors form within a session and do not accumulate: the chronic history does not matter. (4) Narrow-spiking units scale with volatility: precision is implemented by fast inhibition. (5) Moments of explicit 'insight' line up with abrupt changes in feedback coupling. (6) Percept location drifts toward electrodes that are often co-activated: priors reshape percept content, not just gain.", "v": {"novelty": {"score": 8, "ok": true, "reason": "I found no study of how a prior forms for a new artificial channel whose full input history is logged, followed over months on the same arrays. Existing long-term human ICMS work addresses the stability of thresholds and projected fields, not the formation of statistical priors. Requiring multi-year human arrays, logged ICMS, rule reports, and culture and reservoir baselines makes this a strong fit for the combination. Over-ambition is the main risk: 6-12 months of protected blocks, and units tracked across sessions on Utah arrays."}, "necessity": {"score": 5.5, "ok": false, "reason": "The core claim (watching a prior form for a new channel with a logged input history, and whether it moves into feedback beta) could be studied by Bastos in macaques with chronic ICMS 'new sense' learning, where every pulse is also logged. The human-only part, explicit rule report and insight, is secondary in the current framing. The design runs 6-12 months, takes recurring time from limited sessions, and depends on tracking units across months on Utah arrays, which drift. The retrospective arm depends on archival logs the labs do not control."}, "feasibility": {"score": 6, "ok": true, "reason": "This is new: a logged input history for a created sensory channel cannot be had anywhere else, and a 10-15 minute block per session is a reasonable request. Feasibility risks: other experiments' ICMS on the same electrodes keeps changing the 'history' (logged, but not controlled); single units on Utah arrays are not reliably trackable over months, so tracking has to rely on MUA or channel-level measures; and a 6-12 month commitment depends on agreement from the clinical team and on the arrays staying healthy. The waveform-based interneuron claims are weak in human Utah data."}}}, "q1": {"title": "When input enters cortex directly through ICMS, skipping receptors, brainstem and thalamus, which parts of the hierarchical prediction-error response (local mismatch, timing prediction, omission response, alpha/beta anticipation, global/rule effect, scalp MMN- and P3b-like signatures) does cortex generate on its own, which need hierarchical feedback, and which are inherited from subcortical adaptation?", "only": "Bastos alone: NHP ICMS is possible, but monkeys have intact peripheries and thalamic loops that are always running, they cannot report whether they noticed the rule or a missing train, and they cannot wear the human scalp montage. Chao alone: human EEG/ECoG cannot deliver an input that bypasses the thalamus with experimenter-set statistics, cannot record single units in area 1, and epilepsy iEEG has no percept-producing ICMS channel. Cultures and rodents lack the M1-S1 hierarchy and any report. The decisive contrasts need four things together: a largely deafferented S1 with no competing natural input, ICMS whose statistics the experimenter writes, simultaneous M1 and S1 Utah arrays plus scalp EEG, and verbal report. Bastos's propofol/laminar macaque data and Chao's cultures supply the lower rungs of the comparison.", "design": "Human (3-4 sessions): local-global ICMS sequences on 2-4 S1 electrodes whose projected fields are on different fingers. Five trains per sequence (about 200 ms SOA), xxxxY vs xxxxx blocks with global deviants on 20% of trials, rare omissions of the 5th train, and rhythmic vs jittered timing ('when'). A matched block plays the same abstract sequences as auditory or residual-site vibrotactile input. Sparse scalp EEG (20-32 channels placed around the pedestals) is recorded together with both arrays. Stimulation artifacts are handled by blanking and template subtraction, with analysis on non-stimulated S1 channels and on M1. Omission epochs contain no artifact. At the end of each block the participant reports whether there was a rule or a 'missing' touch. Optional instruction block: the rule is told to the participant verbally before any exposure, to see which components change with knowledge alone. Comparison rungs: (i) Chao CMOS-MEA cultures get the same pulse sequences, with and without APV; (ii) Bastos macaque S1 laminar recordings with nearby-column microstimulation get the same sequences, awake and under propofol. Analyses: local vs global effects and omission responses in units, MUA, gamma vs alpha/beta (frequency ordering), early (<150 ms) vs late (>250 ms) windows; M1<->S1 Granger/DCM before and after omissions; single-trial regression of scalp components onto unit and LFP features; each component assigned to the lowest rung where it appears. A shared model family (Chao reservoir models, Bastos JAX laminar models) is fit across all rungs.", "bastos": "Omission-response and laminar local-global ground truth (Xiong 2024) that predicts the band and sign of each component. Predictive-routing predictions: beta drops at the expected channel before error spiking, and the global effect is carried by alpha/beta feedback. Propofol as a tool that removes feedback but leaves feedforward drive. Spike-field and Granger/DCM pipelines. Macaque microstimulation rung. A JAX biophysical model that contrasts a cortex-only prediction loop with an adaptation-only account.", "chao": "The local-global paradigm and hierarchical PE framework (Neuron 2018), frequency ordering of prediction vs error (Comm Biol 2022), the what/when timing manipulation (Huang & Chao 2025), single-trial EEG-to-ECoG mapping now applied one level down to units, the CMOS-MEA culture rung with its deviance and omission protocol (Yaron/Zhang/Chao 2025), and reservoir models.", "outcomes": "(1) Local mismatch, omission spiking and an MMN-like scalp response all appear with ICMS, and omissions are preceded by a rise in M1->S1 beta Granger. Then the priors are cortical and carried by feedback beta even with the thalamus bypassed, and the local effect is intrinsic to cortex. (2) The local effect is much weaker with ICMS than with natural input. Then a large part of the 'cortical' MMN is subcortical adaptation, and decades of MMN interpretation need revising. (3) Local effects only, with no omission or global effect: hierarchical prediction needs thalamocortical loops, which forces both labs to revise cortex-centric models. (4) Omission or global effects appear in M1 before S1, or only in M1: the rule is fed back from a motor/frontal stage and deafferented S1 is a passive receiver. Across rungs, components that appear in cultures are generic local-circuit properties. Components that appear only in awake macaques and humans, and that vanish under propofol, are feedback-dependent. Components that change after the verbal instruction alone can be altered by knowledge.", "v": {"novelty": {"score": 8, "ok": true, "reason": "Searches found no study that runs oddball, omission or local-global sequences through ICMS in human S1, with or without scalp EEG. Human ICMS work so far covers percept mapping, timing, object-specific encoding and S1-to-M1 evoked responses. Crossing a cortex-entry input with a natural-input route, plus the culture and propofol rungs, is a new decomposition that needs all three parties. Two claims are overstated. First, ICMS does not remove subcortical loops: corticothalamic and cortico-cortical recurrence is still engaged, so ICMS removes ascending pre-cortical adaptation, not the thalamus. Second, the local effect with ICMS is confounded by electrode-specific adaptation of the directly stimulated tissue, since evoked responses decay quickly during trains."}, "necessity": {"score": 5, "ok": false, "reason": "The core question is whether prediction-error components are computed in cortex or inherited from subcortical adaptation, and Bastos could answer that alone. Cortical microstimulation in macaques also bypasses receptors, dorsal column nuclei and thalamus for the stimulus itself. Ongoing thalamic input in monkeys is a minor confound that could be addressed with the propofol and awake contrast he already uses. Verbal report and scalp EEG are add-ons, not what makes the contrast decisive. Placing EEG around the pedestals with stimulation artifact is a feasibility risk. The design also overlaps heavily with q6 and tries to do too much: four comparison rungs and seven components."}, "feasibility": {"score": 6, "ok": true, "reason": "The core human test can be done. Omission epochs contain no artifact, M1 is a clean readout, and unit-level local, global and omission effects to ICMS sequences are new. Three problems weaken it. (a) The stated logic does not hold: ICMS skips receptors and the dorsal column nuclei, but the stimulated cortex still drives thalamus through corticothalamic loops, so the thalamus is not taken out of the circuit. (b) The 'natural route' comparison is confounded, because auditory input reaches a different cortex and residual-sensation sites are not the hand. (c) Trains at about 200 ms SOA leave little artifact-free time before the 5th item. The scope (scalp EEG around the pedestals, a culture rung and a macaque propofol rung) is too large for 3-4 sessions. Scalp EEG near the pedestals also needs IRB and infection-control approval."}}}, "q4": {"title": "When the physical input is held fixed, does the endogenous pre-stimulus alpha/beta state at an S1 site causally gate how far an ICMS-evoked signal spreads (to other S1 sites and to M1) and how intense and surprising it feels, and is that gating specific to predicted input, as predictive routing requires?", "only": "Bastos alone: closed-loop ICMS is possible in NHPs, but monkeys cannot rate graded intensity or surprise, and their intact periphery adds state-dependent afferent noise. Chao alone: closed-loop EEG can phase-lock natural stimuli, but those are filtered by the periphery and thalamus and there are no units. TMS-EEG perturbs large populations with no defined percept. Only a human with S1 ICMS percepts and chronic arrays gives a fixed artificial input, local units and LFP, and a reportable percept.", "design": "Real-time beta power and phase estimation on S1 array channels (Chao closed-loop algorithms ported to Blackrock streams). Fixed-amplitude, near-threshold ICMS is delivered in high- vs low-beta states, matched for time since the cue. This is crossed with expectation: a cue predicts the stimulated finger, valid on 80% and invalid on 20% of trials. Measures: evoked spiking and high gamma on non-stimulated S1 channels and on M1 (spatial spread and latency); S1->M1 gamma Granger; detection, a 0-10 intensity rating and a surprise rating. About 400 trials per session over 3 sessions.", "bastos": "The predictive-routing hypotheses and the quantitative prediction that a beta x expectation interaction gates the spread of gamma and spiking. Interpretation of beta generators informed by the spectrolaminar motif, with the caveat that a single-depth array cannot resolve layers. A biophysical circuit model of beta-rhythmic inhibition gating ICMS-evoked activity.", "chao": "Real-time closed-loop stimulation triggered by oscillation state, the expectation-cueing paradigm, and frequency-ordered PE analysis.", "outcomes": "(1) High beta reduces spread and perceived intensity only for predicted ICMS: causal support for predictive routing. (2) High beta suppresses all ICMS equally: a generic inhibitory gain mechanism, not prediction-specific. (3) Beta state has no effect but expectation still changes propagation: predictions are carried by spiking or synaptic templates rather than rhythms, which would falsify routing by oscillations. If neural spread and the report dissociate, that shows which stage limits conscious access.", "v": {"novelty": {"score": 7, "ok": true, "reason": "Some nearby work exists. Pre-stimulus beta events in human S1 are known to reduce near-threshold detection of natural touch, but that is correlational, uses non-invasive data and natural input. Phase-specific ICMS has been delivered in monkey motor cortex (Peles 2020). I found no closed-loop, beta-triggered ICMS in human S1 crossed with a validity cue and graded intensity and surprise reports. The beta x expectation interaction is the new causal test of predictive routing. The beta-state part alone would be closer to incremental, so the novelty rests on that interaction."}, "necessity": {"score": 5, "ok": false, "reason": "Bastos could do this alone. Closed-loop beta-triggered microstimulation crossed with a cue-validity manipulation and a trained detection or near-threshold report is feasible in macaques. Their ICMS also bypasses the periphery, so the argument about state-dependent afferent noise is weak. Intensity and surprise ratings are not needed for the central test (beta x expectation on spread and detection). A single-depth array also limits the laminar interpretation. The question is a good causal test of predictive routing, but it is not unique to this partnership."}, "feasibility": {"score": 7, "ok": true, "reason": "This is feasible. Online beta power and phase estimation on Blackrock streams is achievable, the stimulation parameters stay inside the existing envelope (only the timing changes), and 400 near-threshold trials per session is realistic. It is the cleanest causal test of predictive routing proposed here. Two caveats. Spread to other S1 sites and to M1 at short latency overlaps the stimulation artifact, so 'spread' has to be measured after blanking (for example 10-200 ms). Beta in resting deafferented S1 may also be too weak to give well-separated high and low states."}}}, "q12": {"title": "Can macaque laminar ground truth be used to infer the cortical layer of each electrode on a single-depth human Utah array, and does the inferred layer at an ICMS site determine whether the evoked percept feels natural and whether it engages top-down alpha/beta feedback?", "only": "Bastos alone: laminar ground truth (spectrolaminar motif, area 3b R01 macaques) but no subjective report. Chao alone: no laminar recordings and no ICMS with report. The UChicago group alone: percept reports but no calibrated laminar inference. Human ECoG and EEG cannot resolve layers. Calibration needs macaques co-implanted with a Utah array and laminar probes (Bastos). Application needs human ICMS with report. Interpreting how activity spreads needs Chao's models of patterned-stimulation propagation, which go back to his Potter-lab work.", "design": "Step 1 (macaque, area 3b/1 and M1): co-implant a Utah array with acute laminar probes (Neuropixels or linear) spanning the Utah contacts. Train a classifier mapping single-contact features (alpha/beta-to-gamma ratio, 1/f exponent, spike waveform, spike-LFP phase, evoked latency) to the layer given by CSD and the spectrolaminar motif, and validate it across animals. Step 2 (human, no new session time): apply the classifier to archived recordings from each electrode and check the inferred depth gradients against imaging and array tilt. Step 3 (2-3 sessions): stimulate about 12 S1 electrodes spanning inferred superficial, middle and deep positions, matched for detection threshold. The participant rates naturalness, quality descriptors, field size and stability. Measure the evoked alpha/beta rebound and gamma at distant S1 sites and in M1, plus scalp EEG if possible. Step 4: JAX laminar and spiking-network models predict how much activity spreads horizontally vs feeds back for each stimulated layer, tested against the recordings.", "bastos": "The spectrolaminar motif (Nat Neurosci 2024), multi-area laminar datasets, the area 3b R01 macaques and S1 expertise for co-implant calibration, CSD/laminar analysis, and JAX laminar models.", "chao": "Spiking/reservoir models of how patterned electrical stimulation propagates (Potter-lab culture work), M1 ECoG/BMI expertise, and analysis of large-scale network propagation to read the ICMS-evoked spread as a network response.", "outcomes": "(1) The template transfers (above 70% accuracy in held-out macaques) and human arrays show coherent depth gradients: the first laminar map of human intracortical arrays, making past datasets reinterpretable by layer. (2) Middle-layer sites give lower thresholds and more natural, well-localised percepts, while deep sites give diffuse tingles with stronger M1 coupling: a laminar design rule for neuroprosthetics. (3) Naturalness tracks the evoked alpha/beta feedback signature rather than the inferred layer: felt quality depends on recruiting top-down prediction loops, which supports predictive routing as a theory of how percepts form. (4) No transfer: this sets limits on inferring laminar homology across species from single contacts.", "v": {"novelty": {"score": 6, "ok": true, "reason": "I found no published method that infers cortical layer for human Utah-array electrodes. Work on depth and percepts exists only in rodents (Frontiers 2025, which found that ICMS depth can be discriminated). Linking inferred layer to percept naturalness and feedback recruitment is new. However, the question is mainly methodological, and Chao's part is thin: Bastos together with the Chicago group could do almost all of it. That weakens the claim that only the three-way collaboration can answer it. Feature transfer is also uncertain, because human array LFP differs from macaque LFP after years of implantation."}, "necessity": {"score": 5.5, "ok": false, "reason": "The calibration step needs Bastos (macaque co-implants) and the application needs UChicago's human ICMS with report, but Chao's contribution (models of how culture stimulation propagates) is contrived. The question is mainly Bastos plus the platform. Feasibility is also doubtful: depth spread across one Utah array is limited, a single-contact classifier may not transfer across species and cortical thickness, and co-implanting probes that span Utah contacts in macaque is technically hard."}, "feasibility": {"score": 7, "ok": true, "reason": "This is new and largely feasible. The human step uses archived data, and Step 3 needs only 2-3 ICMS sessions. The weak point is Step 1: acutely inserting laminar probes that 'span' Utah contacts in the same column is technically difficult and risky. The classifier can instead be trained on single-contact subsamples of existing laminar datasets (Bastos), with Utah depth validated in macaques by histology or by using arrays of different shank lengths."}}}, "q6": {"title": "Does a rule-level (global) ICMS violation, delivered to cortex without any subcortical relay, produce single-neuron prediction errors in human S1/M1 only on trials where the person consciously notices the violation, or do neurons compute it regardless while awareness depends on a downstream readout?", "only": "Bastos alone: local-global and propofol data with NHP units, but no trial-level awareness report, so noticed and missed deviants cannot be separated. Chao alone: human EEG/ECoG local-global with report, but no units and with natural stimuli that pass through subcortical relays. Neither lab can put trial-level awareness, single neurons, and a stimulus controlled exactly at the cortical entry point together.", "design": "ICMS sequences of 5 trains felt on D2 (A) or D4 (B), run as AAAAA/AAAAB blocks and their reverse, about 25 sequences per block and 8-10 blocks per session. Report blocks: after random sequences the participant says whether the sequence 'broke the pattern' and gives a confidence rating. No-report blocks: the participant silently counts global deviants and reports the count at the end of the block. Distractor blocks: a concurrent M1-BCI cursor task to reduce awareness. Analysis: local effect (5th item) and global effect (rare vs frequent sequence) in S1 and M1 units and LFP, split by noticed, missed and distractor trials; early (<150 ms) vs late (>250 ms) components; gamma vs alpha/beta carriers; M1 vs S1 latency. 3 sessions.", "bastos": "NHP local-global and propofol datasets that predict what loss of consciousness does to each component. The predictive-routing prediction that the global effect is carried by alpha/beta feedback disinhibition. Spectral-motif metrics, without CSD, for inferring feedforward vs feedback timing from a single-depth array.", "chao": "Local-global expertise and the hierarchical PE framework (Neuron 2018), frequency ordering (Comm Biol 2022), human and marmoset ECoG local-global results for comparison across species, and closed-loop triggering to target low- vs high-alpha states.", "outcomes": "(1) The global effect appears in units only on noticed trials: awareness-linked error reaches primary sensory cortex, consistent with global-workspace ignition feeding back to S1. (2) The global effect appears in units on both noticed and missed trials, but missed trials lack late beta/gamma or propagation to M1: neurons compute rule-level errors unconsciously, so the global effect is not a cellular consciousness marker. (3) No global effect in S1, only in M1 or nowhere: rule-level predictions are not imposed on primary sensory cortex, contradicting strong hierarchical predictive coding.", "v": {"novelty": {"score": 6, "ok": true, "reason": "Whether the global effect in human primary sensory neurons depends on awareness is untested; human global-effect and awareness work is scalp EEG or iEEG without units. It is still largely the same experiment as q1 with report blocks added. Microwire studies in epilepsy patients could in principle ask the awareness-at-units question with natural stimuli in other areas, so the 'only here' case rests on S1, on the input being controlled at cortical entry, and on no peripheral noise. That is valid but narrower than the framing suggests."}, "necessity": {"score": 6.5, "ok": true, "reason": "This passes only just. Adversarial case: epilepsy microwire patients can do local-global tasks with report, and Chao's ECoG can split aware from unaware trials. However, single units in a primary sensory area, a stimulus delivered at the cortical entry point, and noticed vs missed splits are not available to either lab or to epilepsy cohorts, whose arrays are usually in MTL or frontal cortex. The no-report and distractor blocks address report confounds. Weaknesses: it overlaps strongly with q1, and with few deviant trials per category (noticed vs missed) unit statistics may be underpowered."}, "feasibility": {"score": 4, "ok": false, "reason": "Splitting trials into noticed and missed is the whole point, but the numbers cannot support it. 25 sequences x 8-10 blocks with 20% global deviants gives about 50 deviants per session, and across report, no-report and distractor blocks only a handful of missed deviants remain. Attended D2/D4 rule violations are also nearly always noticed. The paradigm largely repeats q1 and has the same ICMS-artifact problem at the 5th item."}}}};
+const QS = [
+ {tier:'pass', ids:['q3','q8'], t:'Does the brain still cancel the feel of its own actions when there is no body?', who:['ZC','LYZ','CP','AB','SX'],
+  only:'Monkeys have intact sensory nerves and spinal gating and cannot say who caused a touch. EEG attenuation studies have intact bodies and no neurons. Only a deafferented BCI user can produce a self-caused touch that is physically identical to an external one, and have the action-to-touch rule rewritten in minutes.',
+  design:'A decoded M1 movement triggers S1 stimulation. This is compared with identical stimulation replayed passively, and then with a rule rewritten by verbal instruction (attempted thumb movement now triggers index stimulation). Readouts are a two-interval intensity judgement, ‘did you cause it?’ ratings, S1 units on channels that were not stimulated, and M1→S1 beta before the stimulation. A sub-aim asks whether attempting to grasp an object produces a predicted contact finger that can be decoded from S1 before contact, and whether that prediction pulls stimulation percepts toward the predicted finger.',
+  decisive:'Whether attenuation follows the body or the learned rule, and whether S1 suppression matches how weak the touch feels, trial by trial.',},
+ {tier:'pass', ids:['q2'], t:'When an expected touch never arrives, is it ever felt, and which signal carries that phantom?', who:['AY','HN','SX','YTH'],
+  only:'A monkey cannot say it felt something, and a trained report is confounded by reward. EEG and ECoG come from people whose skin is intact, so a phantom cannot be separated from real input. Here stimulation is the only touch channel, it can be removed completely, and omission periods contain no artifact.',
+  design:'Rhythmic stimulation sequences on one finger, with 10–15% of trains omitted, in rhythmic, jittered and finger-switch conditions. A second, self-generated context: virtual grasp contact triggers stimulation, and some contacts omit it. Reports are collected after a subset of sequences, against a catch-trial baseline with no rhythm.',
+  decisive:'Whether omission spiking decodes as the expected finger on trials where a phantom is reported (an experience driven by prediction), or whether the phantom goes with alpha/beta before the omission (the routing account).',},
+ {tier:'pass', ids:['q5','q4'], t:'Can one spoken sentence create a finger-specific expectation in S1 neurons, and does it work the same way as one learned from experience?', who:['YTH','SX','AB','HN'],
+  only:'Animals cannot be instructed, so an instructed prior cannot be separated from a learned one. Non-invasive methods cannot resolve finger-specific ensembles in area 1. A cortex that gets no natural input separates top-down expectation from plasticity.',
+  design:'A cue is followed by a sentence (‘the high tone means index finger, 80%’). In the first block the true contingency is 50/50, so only belief differs; in the second it really is 80/20. A new cue pair is learned from experience alone. Near-threshold stimulation is given on electrodes with adjacent fingers, with a ‘which finger’ report and catch trials to catch hallucinated touches. A causal arm delivers the same stimulation in high vs low beta states.',
+  decisive:'Whether expected-finger spiking rises before the stimulus (sharpening) or beta rises on the unexpected channels (routing by inhibition), and whether instructed priors reach S1 at all.',},
+ {tier:'pass', ids:['q10'], t:'Is learning a new, rule-defined body an insight event in M1, and does a break reorganise the network before the ‘aha’?', who:['ZC','CP','TLL','AB'],
+  only:'Monkey BCI-learning studies give no insight report, cannot instruct a rest break, and need weeks of training. EEG insight studies cannot see M1 population geometry, and visuomotor rotations in intact people are confounded by proprioception.',
+  design:'A cursor decoder switches mappings by a hidden rule, and the participant is told only that a rule exists. Spontaneous ‘aha’ reports and periodic rule probes are collected, with rest or distractor breaks and a Day-2 retest.',
+  decisive:'Whether M1 population activity and performance jump together at the report, preceded by beta release, and whether neural reorganisation comes before the subjective insight.',},
+ {tier:'pass', ids:['q11'], t:'Do crossmodal prediction errors in single neurons track whether a robot hand feels like one’s own?', who:['YTH','SC','SX','AB'],
+  only:'Monkeys cannot rate ownership, and their real hand is intact and felt. Rubber-hand studies have no neurons and compete with input from the real hand. Only stimulation plus BCI robot control plus multi-year arrays allows this.',
+  design:'Strokes on the robot hand are seen while finger stimulation is delivered at 0–600 ms delays, actively (the participant moves the robot) or passively. Ownership ratings every few strokes. Violation trials: a stroke is seen with no stimulation, or stimulation is on the wrong finger.',
+  decisive:'Whether the size of the single-neuron error predicts ownership, whether agency or touch anchors it, and whether the relationship changes over years.',},
+ {tier:'two', ids:['q1','q6'], t:'Which parts of the prediction-error hierarchy does cortex produce when input skips peripheral and brainstem adaptation, and do they need awareness?', who:['AB','SX','ZC','YTH'],
+  only:'Microstimulation in macaques also bypasses the periphery, so what makes this human-only is verbal rule knowledge given before any exposure, plus trial-by-trial awareness reports.',
+  design:'Local–global and omission sequences delivered by stimulation on fingers with distinct electrodes, matched with auditory versions, and sparse scalp EEG where allowed. One arm splits noticed from missed rule violations.',
+  decisive:'Whether knowledge alone installs global and omission responses in deafferented S1 units, and whether missed violations still produce single-neuron errors.',},
+ {tier:'two', ids:['q7'], t:'How does adult cortex build priors for a sense that is entirely new, whose whole input history is logged?', who:['ZZ','AY','AB','SX'],
+  only:'Macaques with chronic stimulation could follow prior formation, but not what the animal believes the rule is. This question centres on the gap between what the participant can state about the rule and the implicit neural mismatch.',
+  design:'Start by analysing the archived stimulation logs, which needs no new session time. Then a 10–15 minute grammar block on 2–4 reserved electrodes at the start of routine sessions, with one preregistered reversal.',
+  decisive:'Whether learning moves from local mismatch spiking (culture-like) to beta-carried prediction before the stimulus, and how this relates to explicit rule reports.',},
+ {tier:'two', ids:['q12'], t:'Can macaque laminar data reveal which layer each Utah electrode records from, and does layer decide how natural a stimulation percept feels?', who:['AB','HN','SX'],
+  only:'Calibration needs Bastos macaque laminar data; the human test needs stimulation with report. The reviewers recommend treating it as shared infrastructure for the other questions rather than a stand-alone question.',
+  design:'Train a layer classifier on single contacts from existing laminar S1 and M1 recordings, validate it on macaque Utah arrays with histology, then apply it to archived human data and compare with percept quality.',
+  decisive:'Whether inferred layer predicts stimulation threshold, how natural the percept feels, and how much top-down alpha/beta it recruits.',},
+];
+(function(){
+  const lens={novelty:'Novelty',necessity:'Necessity',feasibility:'Feasibility'};
+  const checks=ids=>{ const v=QDATA[ids[0]].v; return `<div class="checks">${Object.keys(lens).map(k=>`<span class="check ${v[k].ok?'ok':'no'}"><span class="mk">${v[k].ok?'✓':'✗'}</span>${lens[k]} <span class="num">${v[k].score}</span></span>`).join('')}</div>`; };
+  const more=ids=>`<details class="more"><summary>Full design and reviewer notes${ids.length>1?' ('+ids.length+' merged candidates)':''}</summary><div>${ids.map(id=>{const q=QDATA[id]; return `
+     <p><b>${esc(q.title)}</b></p><p><b>Design.</b> ${esc(q.design)}</p><p><b>Outcomes.</b> ${esc(q.outcomes)}</p>
+     <p><b>Bastos lab.</b> ${esc(q.bastos)}</p><p><b>Chao lab.</b> ${esc(q.chao)}</p>
+     ${Object.keys(lens).map(k=>`<p><b>${lens[k]} (${q.v[k].score}, ${q.v[k].ok?'pass':'fail'}).</b> ${esc(q.v[k].reason)}</p>`).join('')}`}).join('<hr style="border:0;border-top:1px solid var(--line);width:100%">')}</div></details>`;
+  let n=0;
+  const card=q=>{ n++; return `<article class="qcard${q.tier==='drop'?' drop':''}">
+    <div class="qnum">Q${n}${q.ids.length>1?' · merged':''}</div><h3>${esc(q.t)}</h3>${checks(q.ids)}
+    <p><span class="lbl2">Why only here</span>${esc(q.only)}</p>
+    ${q.design?`<p><span class="lbl2">Design</span>${esc(q.design)}</p>`:''}
+    ${q.decisive?`<p><span class="lbl2">Decisive result</span>${esc(q.decisive)}</p>`:''}
+    ${q.who.length?`<div class="chips">${q.who.map(personChip).join('')}</div>`:''}
+    ${more(q.ids)}</article>`; };
+  const tiers=[['pass','Passed all three checks','Ranked by mean reviewer score; the first is the reviewers’ top pick.'],['two','Passed two of three checks','']];
+  document.getElementById('questions').innerHTML=tiers.map(([k,h,s])=>`<div class="qtier"><div class="qtier-head"><h3 style="font-size:20px">${h}</h3><span class="small">${s}</span></div><div class="qgrid">${QS.filter(q=>q.tier===k).map(card).join('')}</div></div>`).join('');
+})();
+
+/* ---------- utah bridge ---------- */
+const UTAH = {
+  exps:[
+    {id:'e1', t:'ICMS local–global & omission sequences', d:'Predictable finger-specific stimulation sequences with local and global deviants and omitted pulses. Do S1 and M1 units signal omissions and global errors, and does gamma rise as alpha/beta falls?', leads:['AY','HN','SX'], chao:['cult'], bastos:['nhplam','opendata','biophys'], shared:['pe','omit','hier','osc','spec']},
+    {id:'e2', t:'ICMS timing expectation', d:'Vary when stimulation arrives after a visual cue to separate “when” from “what” predictions in M1 vs S1.', leads:['YTH','YY'], chao:['when','bayes'], bastos:[], shared:['pe','snn']},
+    {id:'e3', t:'Visual cue → ICMS violation', d:'A visual cue predicts which finger is stimulated; incongruent trials stimulate the other finger. Do violation responses appear in S1, M1, or both?', leads:['YTH','SX'], chao:['xmod'], bastos:['nhplam'], shared:['pe','conn','spec']},
+    {id:'e4', t:'BCI feedback perturbations', d:'Brief rotations or delays in cursor or robot-arm feedback act as sensorimotor prediction errors; fit state-space learning rates to M1 population dynamics.', leads:['LYZ','CP'], chao:['motor','bci','bayes'], bastos:[], shared:['decode','dl']},
+    {id:'e5', t:'Self-triggered vs passive ICMS', d:'Identical stimulation triggered by the participant’s decoded movement or delivered passively: a direct test of efference-copy prediction in S1.', leads:['ZC','AY'], chao:['motor','bci'], bastos:['cell','biophys'], shared:['pe','osc']},
+  ],
+  team:[['AB','Co-PI (US) · grant owner, UChicago relationship'],['ZC','Co-PI (Japan) · paradigms, motor and BMI expertise'],['SX','Day-to-day lead · spike–LFP analysis, first author',1],
+        ['AY','Chao-side co-lead · single units, omission, motor'],['YTH','Human paradigms · timing, crossmodal'],['HN','NWB pipeline · biophysical models'],
+        ['CP','BCI decoders · closed loop'],['LYZ','Sensorimotor adaptation models'],['ZZ','Spike-population analysis · spiking models'],['YY','What/when spiking-model predictions']],
+  bastosWhy:{nhplam:'Same paradigms in macaque laminar and area 3b data for a cross-species comparison',opendata:'Shared NWB format and pipeline across sites',biophys:'Predictive-routing circuit models fit to human spikes and LFP',cell:'Inhibitory cell-type mechanism for sensory attenuation'},
+};
+(function(){
+  const sideC=document.getElementById('side-c'), sideB=document.getElementById('side-b'), mid=document.getElementById('mid'), svg=document.getElementById('wires'), br=document.getElementById('bridge');
+  const uniq=k=>[...new Set(UTAH.exps.flatMap(e=>e[k]))];
+  const users=cid=>UTAH.exps.filter(e=>e.chao.includes(cid)||e.bastos.includes(cid)||e.shared.includes(cid)).map(e=>e.id);
+  const holders=(cid,lab)=>byId[cid].who.filter(w=>byId[w].lab===lab).map(w=>byId[w].name.split(' ')[0]).join(', ');
+  uniq('chao').forEach(c=>sideC.insertAdjacentHTML('beforeend',`<div class="uc" tabindex="0" data-c="${c}">${esc(byId[c].label)}<small>${esc(holders(c,'Chao'))} · ${users(c).length} exp.</small></div>`));
+  uniq('bastos').forEach(c=>sideB.insertAdjacentHTML('beforeend',`<div class="uc" tabindex="0" data-c="${c}">${esc(byId[c].label)}<small>${esc(UTAH.bastosWhy[c]||holders(c,'Bastos'))}</small></div>`));
+  sideC.insertAdjacentHTML('beforeend',`<p class="note">Also Chao-only, not used here: creativity, emotion, decision-making, criticality, fMRI/fNIRS/MEG, peripheral physiology.</p>`);
+  sideB.insertAdjacentHTML('beforeend',`<p class="note">Not usable here: laminar analyses (Utah arrays record from one depth).</p>`);
+  const SHARED=uniq('shared');
+  const shortRole=r=>r.split(',')[0].replace('PI · ','PI · ');
+  const pplC=document.getElementById('ppl-c'), pplB=document.getElementById('ppl-b');
+  P.forEach(p=>{ const n=p.tags.filter(t=>SHARED.includes(t)).length;
+    (p.lab==='Chao'?pplC:pplB).insertAdjacentHTML('beforeend',`<div class="up" tabindex="0" data-p="${p.id}"><b>${esc(p.name)}</b><small>${esc(shortRole(p.role))} · ${n} shared</small></div>`); });
+  const tag=(c)=>`<span class="tag" data-c="${c}"><i class="dot ${ownerKey(byId[c].owner)}"></i>${esc(byId[c].label.split(' · ')[0].split(' (')[0])}</span>`;
+  mid.innerHTML = `<div class="ground"><div class="eyebrow">Common ground both labs bring</div><div class="uses">${uniq('shared').map(tag).join('')}</div></div>`+
+    UTAH.exps.map(e=>`<article class="exp" tabindex="0" data-e="${e.id}"><h3>${esc(e.t)}</h3><p>${esc(e.d)}</p>
+      <div class="uses">${[...e.chao,...e.shared,...e.bastos].map(tag).join('')}</div>
+      <div class="chips">${e.leads.map(personChip).join('')}</div></article>`).join('')+
+    `<div class="team"><div class="eyebrow">Launch team</div>${UTAH.team.map(([id,r,lead])=>`<div class="team-row${lead?' lead':''}">${personChip(id)}<span class="role">${esc(r)}</span></div>`).join('')}
+      <div class="team-row"><span class="pill">UChicago</span><span class="role">A named co-lead from the UChicago Utah-array team (none of the 14 has Utah-array or human single-unit experience)</span></div></div>`;
+  function draw(){
+    if(getComputedStyle(svg).display==='none'){svg.innerHTML='';return;}
+    const B=br.getBoundingClientRect(); let s='';
+    const band=mid.querySelector('.ground');
+    P.forEach(p=>{ const el=br.querySelector(`.up[data-p="${p.id}"]`); const r=el.getBoundingClientRect(); const left=p.lab==='Chao';
+      const x1=(left?r.right:r.left)-B.left, y1=r.top+r.height/2-B.top;
+      p.tags.filter(t=>SHARED.includes(t)).forEach(t=>{ const tr=band.querySelector(`.tag[data-c="${t}"]`).getBoundingClientRect();
+        const x2=(left?tr.left+4:tr.right-4)-B.left, y2=tr.top+tr.height/2-B.top, k=left?1:-1, dx=Math.abs(x2-x1)*0.45;
+        s+=`<path class="pl" data-p="${p.id}" data-c="${t}" stroke="${COL[p.lab]}" d="M${x1},${y1} C${x1+k*dx},${y1} ${x2-k*dx},${y2} ${x2},${y2}"/>`; }); });
+    UTAH.exps.forEach(e=>{
+      const er=mid.querySelector(`[data-e="${e.id}"]`).getBoundingClientRect(), y2=er.top+Math.min(28,er.height/2)-B.top;
+      e.chao.forEach(c=>{const r=sideC.querySelector(`[data-c="${c}"]`).getBoundingClientRect(); const x1=r.right-B.left,y1=r.top+r.height/2-B.top,x2=er.left-B.left;
+        s+=`<path data-e="${e.id}" data-c="${c}" stroke="${COL.Chao}" d="M${x1},${y1} C${x1+40},${y1} ${x2-40},${y2} ${x2},${y2}"/>`;});
+      e.bastos.forEach(c=>{const r=sideB.querySelector(`[data-c="${c}"]`).getBoundingClientRect(); const x1=r.left-B.left,y1=r.top+r.height/2-B.top,x2=er.right-B.left;
+        s+=`<path data-e="${e.id}" data-c="${c}" stroke="${COL.Bastos}" d="M${x1},${y1} C${x1-40},${y1} ${x2+40},${y2} ${x2},${y2}"/>`;});
+    });
+    svg.innerHTML=s;
+  }
+  function focus(kind,id){
+    const on=new Set();
+    if(kind==='e'){ const e=UTAH.exps.find(x=>x.id===id); on.add('e:'+id); [...e.chao,...e.bastos,...e.shared].forEach(c=>on.add('c:'+c)); e.leads.forEach(x=>on.add('p:'+x)); }
+    else if(kind==='p'){ on.add('p:'+id); byId[id].tags.filter(t=>SHARED.includes(t)).forEach(t=>on.add('c:'+t)); }
+    else { on.add('c:'+id); users(id).forEach(x=>on.add('e:'+x)); if(SHARED.includes(id)) byId[id].who.forEach(w=>on.add('p:'+w)); }
+    br.querySelectorAll('.exp').forEach(n=>{n.classList.toggle('on',on.has('e:'+n.dataset.e));n.classList.toggle('off',!on.has('e:'+n.dataset.e));});
+    br.querySelectorAll('.up').forEach(n=>{const h=on.has('p:'+n.dataset.p); n.classList.toggle('on',h); n.classList.toggle('off',!h);});
+    br.querySelectorAll('.uc,.tag').forEach(n=>{const h=on.has('c:'+n.dataset.c); n.classList.toggle('on',h&&n.classList.contains('uc')); n.classList.toggle('off',!h);});
+    svg.querySelectorAll('path').forEach(p=>{const h=p.dataset.p ? (on.has('p:'+p.dataset.p)&&on.has('c:'+p.dataset.c)&&(kind!=='e')) : (on.has('e:'+p.dataset.e)&&on.has('c:'+p.dataset.c)); p.classList.toggle('on',h); p.classList.toggle('off',!h);});
+  }
+  function clear(){ br.querySelectorAll('.on,.off').forEach(n=>n.classList.remove('on','off')); }
+  const pick=t=>{const p=t.closest('.up[data-p]'),c=t.closest('.uc[data-c],.tag[data-c]'),e=t.closest('[data-e]'); if(p) focus('p',p.dataset.p); else if(c) focus('c',c.dataset.c); else if(e) focus('e',e.dataset.e);};
+  br.addEventListener('mouseover',ev=>pick(ev.target));
+  br.addEventListener('mouseleave',clear);
+  br.addEventListener('focusin',ev=>pick(ev.target));
+  br.addEventListener('focusout',clear);
+  br.addEventListener('click',ev=>{ if(ev.target.closest('[data-sel]')) return; pick(ev.target); });
+  window.__drawBridge=draw;
+  new ResizeObserver(draw).observe(br);
+  if(document.fonts&&document.fonts.ready) document.fonts.ready.then(draw);
+  draw();
+})();
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>setTimeout(()=>window.__drawBridge(),0));
+new MutationObserver(()=>setTimeout(()=>window.__drawBridge(),0)).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+
+showDefault();
+initGraph();
+</script>
+
+</body>
+</html>
