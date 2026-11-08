@@ -52,7 +52,8 @@ House wording: docs cards say "The documentation of X for <purpose>."; replicati
 - With `d = p - i`: scale is `1 + 1.8*d` when `d > 0` (panel grows past the viewer) and `max(0.1, 1 + 0.45*d)` when `d < 0`
   (upcoming panel starts small). Opacity is `clamp(1 - 1.7*|d|, 0, 1)`; fully faded panels get `visibility:hidden`, and
   only panels within `|d| < 0.5` receive pointer events. To tune: change `1.8` (zoom-out speed), `0.45` (entry size), `1.7` (fade).
-- The background rings (`.bg::before`) scale by `1 + 0.55 * scrollY/innerHeight` via the `--sp` CSS variable.
+- Background (`.bg`): two ring layers zoom with `--sp` = `scrollY/innerHeight`. `.bg::before` (near) scales by `1 + 0.9 * sp`;
+  `.bg::after` (far, behind it) scales by `1 + 0.35 * sp` and drifts up `8vh * sp`. Tune the numbers in `style.css`.
 - Lab cards use `.zin`: scale `0.8 -> 1` and fade in as they enter the lower 55% of the viewport.
 - Fallbacks: the zoom CSS only applies under `html.js`. The inline script in each `<head>` adds that class before first
   paint, so without JavaScript the panels just stack as normal sections. `prefers-reduced-motion` makes `site.js` remove

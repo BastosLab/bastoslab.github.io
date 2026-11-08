@@ -466,7 +466,6 @@ function setMode(m){
   Graph.graphData(buildData());
   if(m==="dist"){ Graph.d3Force('link').distance(l=>20+320*l.d).strength(l=>0.25+ (1-l.d)*0.9); Graph.d3Force('charge').strength(-30); }
   else { Graph.d3Force('link').distance(l=>byId[linkEnds(l)[1]].owner==="shared"?45:60).strength(0.35); Graph.d3Force('charge').strength(-55); }
-  Graph.d3ReheatSimulation && Graph.d3ReheatSimulation();
   makeLabels(); select(selected,false);
   fitted=false;
 }

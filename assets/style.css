@@ -9,6 +9,8 @@ h1,h2{line-height:1.12;margin:0 0 16px;letter-spacing:-.01em}
 h1{font-size:clamp(2.2rem,6vw,4.4rem)}
 h2{font-size:clamp(1.8rem,4.5vw,3rem)}
 .gold{color:var(--gold)}
+/* light theme: gold is accent-only (2:1 on lavender); text in these selectors uses purple */
+:root[data-theme="light"] .gold,:root[data-theme="light"] .hint,:root[data-theme="light"] .box h3,:root[data-theme="light"] .card h3,:root[data-theme="light"] .section-title{color:var(--purple)}
 .lead{color:var(--muted);font-size:1.15rem;max-width:56ch}
 
 /* fixed header + background rings that grow with scroll (--sp is set by site.js) */
@@ -20,9 +22,13 @@ nav a{padding:4px 10px;color:var(--muted);text-decoration:none}
 nav a:hover,nav a[aria-current]{color:var(--fg);box-shadow:inset 0 -2px var(--gold)}
 #theme{margin-left:6px;width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--gold);font-size:1.1rem;cursor:pointer}
 .bg{position:fixed;inset:0;z-index:-1;overflow:hidden;background:radial-gradient(ellipse at 50% 40%,var(--bg2),var(--bg) 70%)}
-.bg::before{content:"";position:absolute;left:50%;top:45%;width:260vmax;height:260vmax;margin:-130vmax 0 0 -130vmax;
- background:repeating-radial-gradient(circle,transparent 0 9vmax,var(--glow) 9vmax 9.15vmax),radial-gradient(circle,var(--glow),transparent 40%);
- transform:scale(calc(1 + var(--sp,0)*.55));will-change:transform}
+/* Depth layers zoom toward the viewer as you scroll (--sp = scrollY / innerHeight, set by site.js):
+   the far ring set (::after, behind) moves slowly, the near one (::before) zooms fastest. Transform only. */
+.bg::before,.bg::after{content:"";position:absolute;left:50%;top:45%;width:260vmax;height:260vmax;margin:-130vmax 0 0 -130vmax;will-change:transform}
+.bg::before{background:repeating-radial-gradient(circle,transparent 0 9vmax,var(--glow) 9vmax 9.15vmax),radial-gradient(circle,var(--glow),transparent 40%);
+ transform:scale(calc(1 + var(--sp,0)*.9))}
+.bg::after{z-index:-1;background:repeating-radial-gradient(circle,transparent 0 22vmax,var(--glow) 22vmax 22.4vmax);opacity:.55;
+ transform:translateY(calc(var(--sp,0)*-8vh)) scale(calc(1 + var(--sp,0)*.35))}
 
 /* Zoom stage: a tall track holding a sticky viewport; site.js scales each .panel by scroll progress.
    Without JS (or with reduced motion, where site.js removes .js) panels simply stack. */
