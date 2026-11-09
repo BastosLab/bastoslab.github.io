@@ -6,7 +6,6 @@
   const webRoot = document.getElementById("cards-webpages") || document.getElementById("cards");
   const presRoot = document.getElementById("cards-presentations") || webRoot;
 
-  let webCount = 0;
   let presCount = 0;
 
   for (const p of window.PROJECTS || []) {
@@ -15,7 +14,6 @@
     if (!target) continue;
 
     if (isPres) presCount++;
-    else webCount++;
 
     const a = el("a", "card zin");
     a.href = p.url;
@@ -25,7 +23,7 @@
     if (p.image) {
       const img = el("img", "card-thumb");
       img.src = p.image;
-      img.alt = p.subject || p.name || "Preview";
+      img.alt = ""; // decorative: the card heading names the link
       img.loading = "lazy";
       a.append(img);
     } else {

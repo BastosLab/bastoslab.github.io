@@ -3,10 +3,11 @@
 // Or append one object to this list.
 // Schema:
 //   subject: card title / topic
+//   name: same value as subject (add_card.py and hand-written entries use it)
 //   description: one- or two-line summary
 //   url: destination link (https://...)
-//   image: path to thumbnail image (e.g. assets/preview.png or https://...)
-//   category: "webpage" (top section) or "presentation" (bottom section)
+//   image: path to thumbnail image (e.g. ../assets/cards/<name>.jpg, relative to lab/index.html, or https://...)
+//   category: "webpage" (top section) or "presentation" (bottom section); a "slides" tag also selects the presentation section
 //   tags: optional array of short labels
 window.PROJECTS = [
   {subject: "jaxfne docs", name: "jaxfne docs", description: "The documentation of jaxfne for biophysical source-field modeling.", url: "https://jaxfne.readthedocs.io/", image: "../assets/cards/card-jaxfne-docs.jpg", category: "webpage", tags: ["docs"]},

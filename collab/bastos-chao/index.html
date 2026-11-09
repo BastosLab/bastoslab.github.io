@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>Bastos × Chao Lab Map</title>
-<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="icon" type="image/png" href="../../assets/favicon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;600&display=swap">
 <style>
@@ -13,16 +13,17 @@
 :root{
   --bg:#f4f6f8; --panel:#ffffff; --ink:#15181d; --muted:#5a616c; --line:#dde1e7; --dim:#c9ced6;
   --bastos:#2a78d6; --chao:#eb6834; --shared:#1baf7a; --graphbg:#fbfcfd;
+  --shared-text:#11795a; --chao-text:#b84a1c;
   --f-display:"Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
   --f-body:"Source Sans 3", "Segoe UI", system-ui, sans-serif;
   --f-mono:"JetBrains Mono", ui-monospace, Menlo, monospace;
 }
 @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
   --bg:#0e1014; --panel:#161a20; --ink:#eceef2; --muted:#a3a9b4; --line:#2a3039; --dim:#39404b;
-  --bastos:#3987e5; --chao:#d95926; --shared:#199e70; --graphbg:#11141a; color-scheme:dark } }
+  --bastos:#3987e5; --chao:#d95926; --shared:#199e70; --graphbg:#11141a; --shared-text:#199e70; --chao-text:var(--chao); color-scheme:dark } }
 :root[data-theme="dark"]{
   --bg:#0e1014; --panel:#161a20; --ink:#eceef2; --muted:#a3a9b4; --line:#2a3039; --dim:#39404b;
-  --bastos:#3987e5; --chao:#d95926; --shared:#199e70; --graphbg:#11141a; color-scheme:dark }
+  --bastos:#3987e5; --chao:#d95926; --shared:#199e70; --graphbg:#11141a; --shared-text:#199e70; --chao-text:var(--chao); color-scheme:dark }
 html,body{background:var(--bg);color:var(--ink)}
 body{font-family:var(--f-body);font-size:16px;line-height:1.5;
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 64px}
@@ -64,24 +65,31 @@ label.chk{font-size:14px;color:var(--muted);display:inline-flex;gap:6px;align-it
 #graph{position:absolute;inset:0}
 #labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
 .lbl{position:absolute;left:0;top:0;white-space:nowrap;font-size:11px;color:var(--muted);transform-origin:0 0;will-change:transform}
-.lbl.person{font-family:var(--f-display);font-weight:700;font-size:13px;color:var(--ink);text-shadow:0 0 3px var(--graphbg),0 0 3px var(--graphbg)}
+.lbl.person{font-family:var(--f-display);font-weight:700;font-size:13px;color:var(--ink);text-shadow:0 0 3px var(--graphbg),0 0 3px var(--graphbg);background:var(--graphbg);padding:2px 4px}
 .lbl.concept{text-shadow:0 0 3px var(--graphbg)}
 .lbl.faded{opacity:.25}
 .legend{position:absolute;left:12px;bottom:10px;display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--muted);background:color-mix(in srgb,var(--graphbg) 85%,transparent);padding:4px 8px;border-radius:6px}
-.hint{position:absolute;right:12px;bottom:10px;font-size:12px;color:var(--muted)}
+.hint{position:absolute;right:12px;bottom:10px;font-size:12px;color:var(--muted);background:var(--graphbg);padding:2px 6px}
 #fallback{position:absolute;inset:0;display:none;align-items:center;justify-content:center;text-align:center;padding:24px;color:var(--muted)}
 
 .inspector{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px;max-height:666px;overflow:auto;min-width:0}
 .inspector .role{color:var(--muted);font-size:14px}
 .pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-family:var(--f-mono);padding:2px 8px;border-radius:999px;border:1px solid var(--line);color:var(--ink)}
+.pill .dot{margin:0}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
 .chip{font:inherit;font-size:13px;line-height:1.3;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:3px 9px;border-radius:999px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;text-align:left}
 .chip:hover{border-color:var(--muted)}
 .chip .dot{margin:0;width:8px;height:8px;flex:none}
 .kv{display:grid;grid-template-columns:auto 1fr auto;gap:4px 10px;font-size:14px;align-items:center}
+.kv .chip{justify-self:start}
 .bar{height:6px;border-radius:3px;background:var(--line);overflow:hidden}
 .bar i{display:block;height:100%;background:var(--muted);border-radius:3px}
 .small{font-size:13px;color:var(--muted)}
+.inspector .small b{color:var(--ink)}
+.insp-h{font-size:22px}
+.idea-h{font-size:20px}
+.insp-p{font-size:15px}
+.mt6{margin-top:6px}
 
 /* concept map */
 .cmap{display:grid;grid-template-columns:1fr 1.5fr 1fr;gap:16px}
@@ -97,7 +105,11 @@ label.chk{font-size:14px;color:var(--muted);display:inline-flex;gap:6px;align-it
 .mx-wrap{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;overflow-x:auto}
 .mx-wrap svg text{fill:var(--ink);font-family:var(--f-body)}
 .mx-wrap svg .muted{fill:var(--muted)}
+#matrix svg{max-width:none;display:block}
+#matrix text[data-sel]{cursor:pointer}
+.mx-wrap > h3{margin-bottom:8px}
 .tip{position:fixed;pointer-events:none;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px;box-shadow:0 4px 18px rgba(0,0,0,.15);max-width:280px;z-index:20}
+.tip .shared-list{color:var(--muted)}
 .two{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:16px}
 @media (max-width:900px){.two{grid-template-columns:minmax(0,1fr)}}
 table{border-collapse:collapse;width:100%;font-size:14px}
@@ -110,12 +122,13 @@ td.r{text-align:right}
 @media (max-width:420px){.ideas{grid-template-columns:minmax(0,1fr)}}
 .idea{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:10px;min-width:0}
 .idea .fit{font-family:var(--f-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase}
-.idea .fit.hi{color:var(--shared)} .idea .fit.md{color:var(--muted)}
+.idea .fit.hi{color:var(--shared-text)} .idea .fit.md{color:var(--muted)}
 .idea p{font-size:15px}
 .idea .step{font-size:14px;color:var(--muted)}
 .idea .step b{color:var(--ink);font-weight:600}
 .method{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:8px;font-size:15px;color:var(--muted)}
 .method b{color:var(--ink)}
+.method h3{color:var(--ink)}
 /* utah bridge */
 .bridge{position:relative;display:grid;grid-template-columns:150px 200px minmax(0,1fr) 200px 150px;gap:36px}
 @media (max-width:1100px){.bridge{grid-template-columns:minmax(0,1fr);gap:16px}.bridge svg.wires{display:none}}
@@ -132,7 +145,7 @@ td.r{text-align:right}
 .bridge svg.wires path.off{opacity:.08}
 .side{display:flex;flex-direction:column;gap:8px;position:relative;z-index:1;min-width:0}
 .side-head{border-bottom:2px solid var(--line);padding-bottom:6px;margin-bottom:4px}
-.side.c .side-head{border-color:var(--chao)} .side.b .side-head{border-color:var(--bastos)}
+.side.c .side-head,.people.c .side-head{border-color:var(--chao)} .side.b .side-head,.people.b .side-head{border-color:var(--bastos)}
 .side .note{font-size:13px;color:var(--muted)}
 .uc{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-size:14px;line-height:1.3;cursor:pointer;display:flex;flex-direction:column;gap:2px;transition:opacity .15s,border-color .15s}
 .side.c .uc{border-left:4px solid var(--chao)} .side.b .uc{border-left:4px solid var(--bastos)}
@@ -156,10 +169,10 @@ td.r{text-align:right}
 .qtier{display:flex;flex-direction:column;gap:12px}
 .qtier + .qtier{margin-top:28px}
 .qtier-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.qtier-head h3{font-size:20px}
 .qgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:16px}
 @media (max-width:440px){.qgrid{grid-template-columns:minmax(0,1fr)}}
 .qcard{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:10px;min-width:0}
-.qcard.drop{opacity:.75}
 .qnum{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
 .qcard h3{font-size:18px;line-height:1.25}
 .qcard p{font-size:15px}
@@ -168,19 +181,20 @@ td.r{text-align:right}
 .check{font-family:var(--f-mono);font-size:12px;padding:2px 8px;border-radius:999px;border:1px solid var(--line);display:inline-flex;gap:5px;align-items:center}
 .check.ok{border-color:var(--shared)} .check.no{border-color:var(--chao)}
 .check .mk{font-weight:600}
-.check.ok .mk{color:var(--shared)} .check.no .mk{color:var(--chao)}
+.check.ok .mk{color:var(--shared-text)} .check.no .mk{color:var(--chao-text)}
 details.more{font-size:14px;color:var(--muted)}
 details.more summary{cursor:pointer;color:var(--ink);font-weight:600}
 details.more summary:focus-visible{outline:2px solid var(--bastos);outline-offset:2px}
 details.more div{display:flex;flex-direction:column;gap:8px;margin-top:8px}
 details.more b{color:var(--ink)}
+details.more hr{border:0;border-top:1px solid var(--line);width:100%}
 @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
 <body>
 
 
-<div class="wrap">
+<main class="wrap">
   <header>
     <div class="eyebrow">Vanderbilt · Bastos lab &nbsp;×&nbsp; IRCN Tokyo · Chao lab</div>
     <h1>Bastos × Chao Lab Map</h1>
@@ -212,7 +226,7 @@ details.more b{color:var(--ink)}
       <div id="graph-box">
         <div id="graph"></div>
         <div id="labels"></div>
-        <div class="legend"><span><i class="dot b"></i>Bastos lab / only</span><span><i class="dot c"></i>Chao lab / only</span><span><i class="dot s"></i>Shared concept</span></div>
+        <div class="legend"><span><i class="dot b"></i>Bastos lab only</span><span><i class="dot c"></i>Chao lab only</span><span><i class="dot s"></i>Shared concept</span></div>
         <div class="hint">drag to orbit · scroll to zoom</div>
         <div id="fallback">The 3D view needs WebGL, which this browser has turned off. The tables below carry the same information.</div>
       </div>
@@ -237,7 +251,7 @@ details.more b{color:var(--ink)}
     </div>
     <div class="two">
       <div class="mx-wrap" id="matrix"></div>
-      <div class="mx-wrap"><h3 style="margin-bottom:8px">Closest cross-lab partner</h3><table id="nn"></table></div>
+      <div class="mx-wrap"><h3>Closest cross-lab partner</h3><table id="nn"></table></div>
     </div>
   </section>
 
@@ -258,11 +272,11 @@ details.more b{color:var(--ink)}
     </div>
     <div class="bridge" id="bridge">
       <svg class="wires" id="wires" aria-hidden="true"></svg>
-      <div class="people c" id="ppl-c"><div class="side-head" style="border-color:var(--chao)"><div class="eyebrow">Chao lab</div><h3>People</h3></div></div>
+      <div class="people c" id="ppl-c"><div class="side-head"><div class="eyebrow">Chao lab</div><h3>People</h3></div></div>
       <div class="side c" id="side-c"><div class="side-head"><div class="eyebrow">Chao lab brings</div><h3>Human paradigms, timing, motor &amp; BCI</h3></div></div>
       <div class="mid" id="mid"></div>
       <div class="side b" id="side-b"><div class="side-head"><div class="eyebrow">Bastos lab brings</div><h3>NHP laminar comparison, cell types, models, data</h3></div></div>
-      <div class="people b" id="ppl-b"><div class="side-head" style="border-color:var(--bastos)"><div class="eyebrow">Bastos lab</div><h3>People</h3></div></div>
+      <div class="people b" id="ppl-b"><div class="side-head"><div class="eyebrow">Bastos lab</div><h3>People</h3></div></div>
     </div>
   </section>
 
@@ -276,12 +290,12 @@ details.more b{color:var(--ink)}
   </section>
 
   <section class="method">
-    <h3 style="color:var(--ink)">How this was built</h3>
+    <h3>How this was built</h3>
     <p><b>Coding.</b> Each CV was read and coded by hand onto 45 concepts (listed in the inspector for every person). A concept was coded when the CV shows a paper, preprint, poster, project or listed skill in it. Stated interests count only when there is no other evidence for that person (for example, Sali Rahman's interest in predictive processing).</p>
     <p><b>Distance.</b> Jaccard similarity = shared concepts ÷ concepts held by either person; distance = 1 − similarity. Every concept counts equally, so a PI with a long CV overlaps more with everyone.</p>
     <p><b>Caveats.</b> CVs differ in length and detail; trainee CVs list fewer areas. Heng Zhang's current position is Kyushu University; he is included because his CV was in the Chao-lab set and he co-authors with Zenas Chao.</p>
   </section>
-</div>
+</main>
 <div class="tip" id="tip" hidden></div>
 
 <script src="https://unpkg.com/3d-force-graph@1.73.4/dist/3d-force-graph.min.js"></script>
@@ -357,18 +371,18 @@ function personChip(pid){ const p=byId[pid]; return `<button class="chip" data-s
 function showDefault(){
   insp.innerHTML = `<div class="eyebrow">Inspector</div><h3>Pick a node</h3>
   <p class="small">Click a sphere in the graph, or any name or concept on this page. The inspector lists that person's concepts and closest partners, or which people hold that concept.</p>
-  <div class="eyebrow" style="margin-top:6px">Bastos lab</div><div class="chips">${P.filter(p=>p.lab==="Bastos").map(p=>personChip(p.id)).join('')}</div>
+  <div class="eyebrow mt6">Bastos lab</div><div class="chips">${P.filter(p=>p.lab==="Bastos").map(p=>personChip(p.id)).join('')}</div>
   <div class="eyebrow">Chao lab</div><div class="chips">${P.filter(p=>p.lab==="Chao").map(p=>personChip(p.id)).join('')}</div>`;
 }
 function showPerson(id){
   const p=byId[id]; const other = P.filter(q=>q.lab!==p.lab), same=P.filter(q=>q.lab===p.lab && q.id!==id);
   const rank = arr=>arr.map(q=>[q,sim(id,q.id)]).sort((a,b)=>b[1]-a[1]).slice(0,4);
-  const rows = arr=>rank(arr).map(([q,s])=>`<button class="chip" data-sel="${q.id}" style="justify-self:start"><i class="dot ${q.lab==="Bastos"?"b":"c"}"></i>${esc(q.name)}</button><div class="bar"><i style="width:${Math.round(s*100/0.6)}%"></i></div><span class="num">${s.toFixed(2)}</span>`).join('');
+  const rows = arr=>rank(arr).map(([q,s])=>`<button class="chip" data-sel="${q.id}"><i class="dot ${q.lab==="Bastos"?"b":"c"}"></i>${esc(q.name)}</button><div class="bar"><i style="width:${Math.round(s*100/0.6)}%"></i></div><span class="num">${s.toFixed(2)}</span>`).join('');
   const tagsBy = GROUPS.map(g=>{const ts=p.tags.filter(t=>byId[t].group===g); return ts.length?`<div class="eyebrow">${g}</div><div class="chips">${ts.map(chipFor).join('')}</div>`:''}).join('');
   const uniq = p.tags.filter(t=>byId[t].owner===p.lab).length;
-  insp.innerHTML = `<div><span class="pill"><i class="dot ${p.lab==="Bastos"?"b":"c"}" style="margin:0"></i>${p.lab} lab</span></div>
-  <h3 style="font-size:22px">${esc(p.name)}</h3><div class="role">${esc(p.role)}</div>
-  <p style="font-size:15px">${esc(p.summary)}</p>
+  insp.innerHTML = `<div><span class="pill"><i class="dot ${p.lab==="Bastos"?"b":"c"}"></i>${p.lab} lab</span></div>
+  <h3 class="insp-h">${esc(p.name)}</h3><div class="role">${esc(p.role)}</div>
+  <p class="insp-p">${esc(p.summary)}</p>
   <div class="small"><span class="num">${p.tags.length}</span> concepts · <span class="num">${uniq}</span> unique to the ${p.lab} lab</div>
   <div class="eyebrow">Closest in the other lab</div><div class="kv">${rows(other)}</div>
   ${same.length?`<div class="eyebrow">Closest in own lab</div><div class="kv">${rows(same)}</div>`:''}
@@ -377,16 +391,16 @@ function showPerson(id){
 function showConcept(id){
   const c=byId[id]; const b=c.who.filter(w=>byId[w].lab==="Bastos"), z=c.who.filter(w=>byId[w].lab==="Chao");
   const ownTxt = c.owner==="shared"?"Shared by both labs":`Only the ${c.owner} lab`;
-  insp.innerHTML = `<div><span class="pill"><i class="dot ${ownerKey(c.owner)}" style="margin:0"></i>${ownTxt}</span></div>
-  <h3 style="font-size:22px">${esc(c.label)}</h3><div class="role">${c.group}</div>
+  insp.innerHTML = `<div><span class="pill"><i class="dot ${ownerKey(c.owner)}"></i>${ownTxt}</span></div>
+  <h3 class="insp-h">${esc(c.label)}</h3><div class="role">${c.group}</div>
   <div class="small">Bastos lab <span class="num">${b.length}/${nB}</span> · Chao lab <span class="num">${z.length}/${nC}</span></div>
   ${b.length?`<div class="eyebrow">Bastos lab</div><div class="chips">${b.map(personChip).join('')}</div>`:''}
   ${z.length?`<div class="eyebrow">Chao lab</div><div class="chips">${z.map(personChip).join('')}</div>`:''}`;
 }
 function showIdea(i){
   const d=IDEAS[i];
-  insp.innerHTML = `<div class="eyebrow">Collaboration idea</div><h3 style="font-size:20px">${esc(d.t)}</h3>
-  <p style="font-size:15px">${esc(d.why)}</p><p class="small"><b style="color:var(--ink)">First step.</b> ${esc(d.step)}</p>
+  insp.innerHTML = `<div class="eyebrow">Collaboration idea</div><h3 class="idea-h">${esc(d.t)}</h3>
+  <p class="insp-p">${esc(d.why)}</p><p class="small"><b>First step.</b> ${esc(d.step)}</p>
   <div class="eyebrow">People</div><div class="chips">${d.who.map(personChip).join('')}</div>
   <div class="eyebrow">Concepts</div><div class="chips">${d.c.map(chipFor).join('')}</div>`;
 }
@@ -517,11 +531,11 @@ const order=(()=>{const B=P.filter(p=>p.lab==="Bastos"); const Z=P.filter(p=>p.l
 const tip=document.getElementById('tip');
 function drawMatrix(){
   const n=order.length, cell=30, left=150, top=150, W=left+n*cell+8, H=top+n*cell+40;
-  let s=`<svg viewBox="0 0 ${W} ${H}" width="${W}" style="max-width:none;display:block" role="img" aria-label="Pairwise similarity matrix">`;
+  let s=`<svg viewBox="0 0 ${W} ${H}" width="${W}" role="img" aria-label="Pairwise similarity matrix">`;
   order.forEach((p,i)=>{
     const c=p.lab==="Bastos"?COL.Bastos:COL.Chao;
-    s+=`<circle cx="${left-10}" cy="${top+i*cell+cell/2}" r="4" fill="${c}"/><text x="${left-20}" y="${top+i*cell+cell/2+4}" text-anchor="end" font-size="12" data-sel="${p.id}" style="cursor:pointer">${esc(p.name)}</text>`;
-    s+=`<g transform="translate(${left+i*cell+cell/2},${top-10}) rotate(-55)"><text x="12" y="4" font-size="12" data-sel="${p.id}" style="cursor:pointer">${esc(p.name)}</text><circle cx="0" cy="0" r="4" fill="${c}"/></g>`;
+    s+=`<circle cx="${left-10}" cy="${top+i*cell+cell/2}" r="4" fill="${c}"/><text x="${left-20}" y="${top+i*cell+cell/2+4}" text-anchor="end" font-size="12" data-sel="${p.id}">${esc(p.name)}</text>`;
+    s+=`<g transform="translate(${left+i*cell+cell/2},${top-10}) rotate(-55)"><text x="12" y="4" font-size="12" data-sel="${p.id}">${esc(p.name)}</text><circle cx="0" cy="0" r="4" fill="${c}"/></g>`;
   });
   order.forEach((a,i)=>order.forEach((b,j)=>{
     const v=i===j?null:sim(a.id,b.id);
@@ -537,7 +551,7 @@ function drawMatrix(){
   m.querySelectorAll('rect[data-a]').forEach(r=>{
     r.addEventListener('mousemove',e=>{const a=byId[r.dataset.a],b=byId[r.dataset.b]; if(a.id===b.id){tip.hidden=true;return;}
       const sh=a.tags.filter(t=>b.tags.includes(t)).map(t=>byId[t].label);
-      tip.innerHTML=`<b>${esc(a.name)} × ${esc(b.name)}</b><br>Similarity <span class="num">${sim(a.id,b.id).toFixed(2)}</span> · ${sh.length} shared<br><span style="color:var(--muted)">${esc(sh.slice(0,8).join(', '))}${sh.length>8?' …':''}</span>`;
+      tip.innerHTML=`<b>${esc(a.name)} × ${esc(b.name)}</b><br>Similarity <span class="num">${sim(a.id,b.id).toFixed(2)}</span> · ${sh.length} shared<br><span class="shared-list">${esc(sh.slice(0,8).join(', '))}${sh.length>8?' …':''}</span>`;
       tip.hidden=false; tip.style.left=Math.min(e.clientX+14,innerWidth-300)+'px'; tip.style.top=(e.clientY+14)+'px';});
     r.addEventListener('mouseleave',()=>tip.hidden=true);
     r.style.cursor='pointer'; r.addEventListener('click',()=>{ if(r.dataset.a!==r.dataset.b) select(r.dataset.a,true); });
@@ -603,9 +617,9 @@ const QS = [
   const more=ids=>`<details class="more"><summary>Full design and reviewer notes${ids.length>1?' ('+ids.length+' merged candidates)':''}</summary><div>${ids.map(id=>{const q=QDATA[id]; return `
      <p><b>${esc(q.title)}</b></p><p><b>Design.</b> ${esc(q.design)}</p><p><b>Outcomes.</b> ${esc(q.outcomes)}</p>
      <p><b>Bastos lab.</b> ${esc(q.bastos)}</p><p><b>Chao lab.</b> ${esc(q.chao)}</p>
-     ${Object.keys(lens).map(k=>`<p><b>${lens[k]} (${q.v[k].score}, ${q.v[k].ok?'pass':'fail'}).</b> ${esc(q.v[k].reason)}</p>`).join('')}`}).join('<hr style="border:0;border-top:1px solid var(--line);width:100%">')}</div></details>`;
+     ${Object.keys(lens).map(k=>`<p><b>${lens[k]} (${q.v[k].score}, ${q.v[k].ok?'pass':'fail'}).</b> ${esc(q.v[k].reason)}</p>`).join('')}`}).join('<hr>')}</div></details>`;
   let n=0;
-  const card=q=>{ n++; return `<article class="qcard${q.tier==='drop'?' drop':''}">
+  const card=q=>{ n++; return `<article class="qcard">
     <div class="qnum">Q${n}${q.ids.length>1?' · merged':''}</div><h3>${esc(q.t)}</h3>${checks(q.ids)}
     <p><span class="lbl2">Why only here</span>${esc(q.only)}</p>
     ${q.design?`<p><span class="lbl2">Design</span>${esc(q.design)}</p>`:''}
@@ -613,7 +627,7 @@ const QS = [
     ${q.who.length?`<div class="chips">${q.who.map(personChip).join('')}</div>`:''}
     ${more(q.ids)}</article>`; };
   const tiers=[['pass','Passed all three checks','Ranked by mean reviewer score; the first is the reviewers’ top pick.'],['two','Passed two of three checks','']];
-  document.getElementById('questions').innerHTML=tiers.map(([k,h,s])=>`<div class="qtier"><div class="qtier-head"><h3 style="font-size:20px">${h}</h3><span class="small">${s}</span></div><div class="qgrid">${QS.filter(q=>q.tier===k).map(card).join('')}</div></div>`).join('');
+  document.getElementById('questions').innerHTML=tiers.map(([k,h,s])=>`<div class="qtier"><div class="qtier-head"><h3>${h}</h3><span class="small">${s}</span></div><div class="qgrid">${QS.filter(q=>q.tier===k).map(card).join('')}</div></div>`).join('');
 })();
 
 /* ---------- utah bridge ---------- */
