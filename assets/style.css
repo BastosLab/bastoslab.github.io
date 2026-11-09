@@ -65,7 +65,7 @@ nav a:hover,nav a[aria-current]{color:var(--fg);box-shadow:inset 0 -2px var(--go
 .tag{font-size:.75rem;padding:2px 8px;border:1px solid var(--line);border-radius:99px;color:var(--muted)}
 .card .go{font-size:.85rem;color:var(--link);margin-top:4px}
 .card-empty-hint{color:var(--muted);font-style:italic;font-size:0.9rem;padding:12px 0}
-@media (max-width:600px){.grid{grid-template-columns:1fr}}
+@media (max-width:600px){.grid{grid-template-columns:1fr}.page{padding-top:152px}}
 footer{padding:28px max(20px,8vw);color:var(--muted);font-size:.85rem;border-top:1px solid var(--line);background:var(--bg)}
 footer a{display:inline-block;padding:12px 0;margin-right:12px}
 
